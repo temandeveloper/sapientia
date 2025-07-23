@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    LayoutDashboard, 
     Bot, 
-    Clapperboard, 
-    Music, 
+    ToolCase, 
+    HardDrive, 
+    Gauge, 
     Settings, 
     Info,
-    KeyRound,
+    Cable,
     Server,
-    LockKeyhole,
-    Wrench,
+    KeyRound,
 } from 'lucide-react';
 import { AppLogo } from '../components/AppLogo';
 import { NavItem } from '../components/NavItem';
@@ -23,13 +22,13 @@ export function Sidebar({ activeView, setActiveView }) {
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     
     const menuItems = [
-        { id: 'commands', text: 'Commands Center', icon: LayoutDashboard },
-        { id: 'functions', text: 'Tools Functions', icon: Bot },
-        { id: 'memories', text: 'Manage Memories', icon: Clapperboard },
-        { id: 'performance', text: 'Performance Status', icon: Music },
+        { id: 'commands', text: 'Commands Center', icon: Bot },
+        { id: 'functions', text: 'Tools Functions', icon: ToolCase },
+        { id: 'memories', text: 'Manage Memories', icon: HardDrive },
+        { id: 'performance', text: 'Performance Status', icon: Gauge },
         { id: 'remote', text: 'Remote', icon: Server }, // Menu baru
-        { id: 'api', text: 'API Access', icon: KeyRound },
-        { id: 'auth', text: 'Manage key Auth', icon: LockKeyhole },
+        { id: 'api', text: 'API Access', icon: Cable },
+        { id: 'auth', text: 'Manage key Auth', icon: KeyRound },
         { id: 'settings', text: 'Settings', icon: Settings },
     ];
 

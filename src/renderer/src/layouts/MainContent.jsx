@@ -22,8 +22,8 @@ export function MainContent({ activeView, messages, onSendMessage, isLoading }) 
                 return <RemoteConnection />;
             case 'api':
                 return <PlaceholderView title="Manage API" />;
-            case 'auth':
-                return <PlaceholderView title="Manage Authentication" />;
+            case 'party':
+                return <PlaceholderView title="Manage Third Party" />;
             case 'settings':
                 return <PlaceholderView title="Settings" />;
             default:

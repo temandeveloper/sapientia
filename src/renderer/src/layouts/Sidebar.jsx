@@ -23,12 +23,12 @@ export function Sidebar({ activeView, setActiveView }) {
     
     const menuItems = [
         { id: 'commands', text: 'Commands Center', icon: Bot },
-        { id: 'functions', text: 'Tools Functions', icon: ToolCase },
+        { id: 'functions', text: 'Tools & Functions', icon: ToolCase },
         { id: 'memories', text: 'Manage Memories', icon: HardDrive },
         { id: 'performance', text: 'Performance Status', icon: Gauge },
         { id: 'remote', text: 'Remote', icon: Server }, // Menu baru
         { id: 'api', text: 'API Access', icon: Cable },
-        { id: 'auth', text: 'Manage key Auth', icon: KeyRound },
+        { id: 'party', text: 'Manage Third Party', icon: KeyRound },
         { id: 'settings', text: 'Settings', icon: Settings },
     ];
 

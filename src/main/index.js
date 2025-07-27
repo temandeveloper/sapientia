@@ -1,10 +1,26 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  Notification,
+} from 'electron'
+import path from 'path'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { fileURLToPath } from 'url'
+import {
+  createModelDownloader,
+  combineModelDownloaders,
+} from 'node-llama-cpp'
+import fs from 'fs'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 
 function createWindow() {
   // Create the browser window.
+  console.log(__dirname, '../preload/index.js')
   const mainWindow = new BrowserWindow({
     minWidth: 1180,
     minHeight: 670,
@@ -12,7 +28,7 @@ function createWindow() {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: path.join(__dirname, '../preload/index.mjs'),
       sandbox: false
     }
   })
@@ -34,6 +50,74 @@ function createWindow() {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
+//=========================== section download model ===========================
+
+ipcMain.on('download-model', async (event, data) => {
+  try {
+    console.log('start download model')
+    const modelPath = path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
+    if (fs.existsSync(modelPath)) {
+      fs.rmSync(modelPath, { recursive: true })
+      console.log('remove existing directory:', modelPath)
+    }
+
+    const downloaders = [
+      createModelDownloader({
+        modelUri: 'hf:AhmadFadil/gemma-2-2b-it-GGUF/gemma-2-2b-it-Q4_K_M.gguf',
+        dirPath: path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
+      })
+    ]
+    const combinedDownloader = await combineModelDownloaders(downloaders, {
+      skipExisting: true,
+      deleteTempFileOnCancel: true,
+      onProgress: (progress) => {
+        const downloaded = formatBytes(progress.downloadedSize)
+        const total = formatBytes(progress.totalSize)
+        const percentage = calculateProgress(progress.downloadedSize, progress.totalSize)
+        console.log(`Download progress: ${downloaded} / ${total} (${percentage}%)`)
+        event.sender.send('download-progress', {
+          downloaded: downloaded,
+          total: total,
+          percentage: percentage
+        })
+      }
+    })
+    console.log(
+      'download path start : ',
+      path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
+    )
+    const [model1Path] = await combinedDownloader.download()
+    console.log('downloaded model : ', model1Path)
+  } catch (error) {
+    console.error('Failed to download model:', error)
+    // Remove partially downloaded file if download fails
+    const modelPath = path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
+    if (fs.existsSync(modelPath)) {
+      fs.rmSync(modelPath, { recursive: true })
+      console.log('remove existing directory:', modelPath)
+    }
+  }
+})
+
+const formatBytes = (bytes, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+}
+
+const calculateProgress = (downloadedSize, totalSize) => {
+  return ((downloadedSize / totalSize) * 100).toFixed(2)
+}
+
+//=========================== end section download model ===========================
+
+ipcMain.on('notification', (event, data) => {
+  new Notification(data).show()
+})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

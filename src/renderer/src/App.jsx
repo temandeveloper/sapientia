@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CustomScrollbarStyles } from './layouts/CustomScrollbarStyles';
 import { Sidebar } from './layouts/Sidebar';
 import { MainContent } from './layouts/MainContent';
+import ModalDownload from './components/ModalDownload';
 import '../assets/output.css';
 
 // Main App Component
@@ -31,6 +32,7 @@ export default function App() {
 
     return (
         <div className="bg-[#14171f] min-h-screen font-sans flex">
+            <ModalDownload/>
             <CustomScrollbarStyles />
             <Sidebar activeView={activeView} setActiveView={setActiveView} />
             <MainContent 

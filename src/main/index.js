@@ -20,7 +20,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function createWindow() {
   // Create the browser window.
-  console.log(__dirname, '../preload/index.js')
   const mainWindow = new BrowserWindow({
     minWidth: 1180,
     minHeight: 670,
@@ -55,7 +54,7 @@ function createWindow() {
 
 ipcMain.on('download-model', async (event, data) => {
   try {
-    console.log('start download model')
+    console.log('start download model',data.modelUri)
     const modelPath = path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
     if (fs.existsSync(modelPath)) {
       fs.rmSync(modelPath, { recursive: true })
@@ -64,7 +63,7 @@ ipcMain.on('download-model', async (event, data) => {
 
     const downloaders = [
       createModelDownloader({
-        modelUri: 'hf:AhmadFadil/gemma-2-2b-it-GGUF/gemma-2-2b-it-Q4_K_M.gguf',
+        modelUri: data.modelUri,
         dirPath: path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
       })
     ]
@@ -75,11 +74,12 @@ ipcMain.on('download-model', async (event, data) => {
         const downloaded = formatBytes(progress.downloadedSize)
         const total = formatBytes(progress.totalSize)
         const percentage = calculateProgress(progress.downloadedSize, progress.totalSize)
-        console.log(`Download progress: ${downloaded} / ${total} (${percentage}%)`)
         event.sender.send('download-progress', {
           downloaded: downloaded,
           total: total,
-          percentage: percentage
+          percentage: percentage,
+          metadata: data.metadata,
+          settingName: data.settingName
         })
       }
     })

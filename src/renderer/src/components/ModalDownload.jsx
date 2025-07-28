@@ -1,46 +1,74 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { getDataTable,updateDataTable } from '../lib/idbHelper';
 export default function ModalDownload(){
     const modalRef = useRef(null);
     const downloadProgressData = useRef(null);
     const downloadProgressTotal = useRef(null);
     const downloadProgressPercentage = useRef(null);
     const downloadProgressBar = useRef(null);
+    let singleExec = null;
     // State to manage download progress and active download
     const [activeDownload, setActiveDownload] = useState(false);
 
     useEffect(() => {
-        if (modalRef.current) {
-            modalRef.current.showModal()
-            modalRef.current.addEventListener("keydown", (e) => {
-                e.preventDefault();
-            });
+        async function downloadDependencies() {
+            let modelDownload = await getDataTable("tbSettings",[{
+                settingName: {
+                    in : ["base-model"]
+                }
+            }])
+
+            console.log("modelDownload", modelDownload);
+
+            if (modalRef.current && modelDownload[0].value.statusDownloaded) {
+                modalRef.current.showModal()
+                modalRef.current.addEventListener("keydown", (e) => {
+                    e.preventDefault();
+                });
+            }
+
+            if(activeDownload){
+                console.log("Download model is already active",{
+                    modelUri    : modelDownload[0].value.modelUri,
+                    settingName : modelDownload[0].settingName,
+                    metadata    : modelDownload[0].value,
+                });
+                window.underWorld.downloadModel({
+                    modelUri    : modelDownload[0].value.modelUri,
+                    settingName : modelDownload[0].settingName,
+                    metadata    : modelDownload[0].value,
+                });
+            }
+
+            console.log("ModalDownload mounted",activeDownload);
         }
-        console.log("ModalDownload mounted",activeDownload);
-    }, []);
+        downloadDependencies();
+    }, [activeDownload]);
 
     const handleActiveDownload = () => {
-        window.underWorld.downloadModel({
-            command    : "download-model"
-        });
         setActiveDownload(true);
     }
 
-    window.underWorld.onDownloadProgress((data) => {
+    window.underWorld.onDownloadProgress((data) => { // Listen ini ngebug tertrigger beberapa kali
         downloadProgressData.current.textContent = data.downloaded;
         downloadProgressTotal.current.textContent = data.total;
         downloadProgressPercentage.current.textContent = data.percentage;
         downloadProgressBar.current.value = data.percentage;
         if(parseFloat(data.percentage) >= 100){
             try {
-                // {update database in this line}
                 clearTimeout(singleExec)
                 singleExec = setTimeout(async () => {
-                    console.log("Download model is success")
+                    data.metadata.statusDownloaded = true;
+                    updateDataTable("tbSettings",{
+                        value       : data.metadata,
+                        datetime    : Date.now(),
+                    },{settingName : data.settingName})
                     modalRef.current.close()
+                    console.log("Download model is success")
                     window.underWorld.notification({ title: "RabBit Info", body: `Download model is success` });
                 }, 1500); // should match OS multi-click speed
             } catch (error) {
-                alert("Failed to download model")
+                console.log("Download model failed", error);
             }
             
         }

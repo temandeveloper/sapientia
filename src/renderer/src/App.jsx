@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CustomScrollbarStyles } from './layouts/CustomScrollbarStyles';
 import { Sidebar } from './layouts/Sidebar';
 import { MainContent } from './layouts/MainContent';
 import ModalDownload from './components/ModalDownload';
+import {initDatabase} from './lib/idbHelper.js';
 import '../assets/output.css';
 
 // Main App Component
@@ -10,6 +11,10 @@ export default function App() {
     const [activeView, setActiveView] = useState('commands');
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        initDatabase()
+    }, []);
 
     // Diperbarui: Menggunakan data dummy, bukan API call
     const handleSendMessage = async (prompt) => {

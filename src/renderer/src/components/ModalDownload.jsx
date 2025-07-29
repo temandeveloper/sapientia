@@ -1,17 +1,21 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { getDataTable,updateDataTable } from '../lib/idbHelper';
+import { initDatabase,getDataTable,updateDataTable } from '../lib/idbHelper';
+
 export default function ModalDownload(){
     const modalRef = useRef(null);
-    const downloadProgressData = useRef(null);
-    const downloadProgressTotal = useRef(null);
-    const downloadProgressPercentage = useRef(null);
-    const downloadProgressBar = useRef(null);
     let singleExec = null;
     // State to manage download progress and active download
     const [activeDownload, setActiveDownload] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState({
+        downloaded: '0',
+        total: '0',
+        percentage: '0',
+    });
 
     useEffect(() => {
         async function downloadDependencies() {
+            await initDatabase();
+
             let modelDownload = await getDataTable("tbSettings",[{
                 settingName: {
                     in : ["base-model"]
@@ -20,7 +24,7 @@ export default function ModalDownload(){
 
             console.log("modelDownload", modelDownload);
 
-            if (modalRef.current && modelDownload[0].value.statusDownloaded) {
+            if (modalRef.current && modelDownload[0].value.statusDownloaded === false) {
                 modalRef.current.showModal()
                 modalRef.current.addEventListener("keydown", (e) => {
                     e.preventDefault();
@@ -49,30 +53,40 @@ export default function ModalDownload(){
         setActiveDownload(true);
     }
 
-    window.underWorld.onDownloadProgress((data) => { // Listen ini ngebug tertrigger beberapa kali
-        downloadProgressData.current.textContent = data.downloaded;
-        downloadProgressTotal.current.textContent = data.total;
-        downloadProgressPercentage.current.textContent = data.percentage;
-        downloadProgressBar.current.value = data.percentage;
-        if(parseFloat(data.percentage) >= 100){
-            try {
-                clearTimeout(singleExec)
-                singleExec = setTimeout(async () => {
-                    data.metadata.statusDownloaded = true;
-                    updateDataTable("tbSettings",{
-                        value       : data.metadata,
-                        datetime    : Date.now(),
-                    },{settingName : data.settingName})
-                    modalRef.current.close()
-                    console.log("Download model is success")
-                    window.underWorld.notification({ title: "RabBit Info", body: `Download model is success` });
-                }, 1500); // should match OS multi-click speed
-            } catch (error) {
-                console.log("Download model failed", error);
+    useEffect(() => {
+        const cleanListener = window.underWorld.onDownloadProgress((data) => { // Listen ini ngebug tertrigger beberapa kali
+
+            // Update the download progress state
+            setDownloadProgress(data);
+
+            if(parseFloat(data.percentage) >= 100){
+                try {
+                    clearTimeout(singleExec)
+                    singleExec = setTimeout(async () => {
+                        data.metadata.statusDownloaded = true;
+                        updateDataTable("tbSettings",{
+                            value       : data.metadata,
+                            datetime    : Date.now(),
+                        },{settingName : data.settingName})
+                        modalRef.current.close()
+                        console.log("Download model is success")
+                        window.underWorld.notification({ title: "RabBit Info", body: `Download model is success` });
+                    }, 1500); // should match OS multi-click speed
+                } catch (error) {
+                    console.log("Download model failed", error);
+                }
             }
-            
-        }
-    });
+        });
+
+        return () => {
+            cleanListener(); // Clean up the listener on unmount karena variable cleanListener return fungsi removelistener dari preload
+            if (singleExec) {
+                clearTimeout(singleExec);
+            }
+        };
+    }, []);
+
+    
 
     return (
         <>
@@ -85,8 +99,8 @@ export default function ModalDownload(){
                     </p>
                     {activeDownload ? (
                         <>
-                            <div className="mb-1 text-xs font-medium dark:text-white">Download progress: <span ref={downloadProgressData} id="progress-data">0</span> / <span ref={downloadProgressTotal} id="total-data">0</span> (<span ref={downloadProgressPercentage} id="percentage-data">0</span>%)</div>
-                            <progress ref={downloadProgressBar} className="progress progress-info w-full" value="0" max="100"></progress>
+                            <div className="mb-1 text-xs font-medium dark:text-white">Download progress: <span id="progress-data">{downloadProgress.downloaded}</span> / <span id="total-data">{downloadProgress.total}</span> (<span id="percentage-data">{downloadProgress.percentage}</span>%)</div>
+                            <progress className="progress progress-info w-full" value={downloadProgress.percentage} max="100"></progress>
                         </>
                     ) : (
                         <>

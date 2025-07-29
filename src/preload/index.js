@@ -10,7 +10,14 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('underWorld', {
         downloadModel: (config) => ipcRenderer.send('download-model',config),
-        onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (_event, value) => callback(value)),
+        onDownloadProgress: (callback) => {
+          const subscription = (_event, value) => callback(value)
+          ipcRenderer.on('download-progress', subscription)
+          // Return a function to unsubscribe from the event
+          return () => {
+            ipcRenderer.removeListener('download-progress', subscription)
+          }
+        },
         notification: (notif) => ipcRenderer.send('notification',notif),
         initModule: async (modules) => ipcRenderer.invoke('init-module',modules),
         gotoLink: (link) => {

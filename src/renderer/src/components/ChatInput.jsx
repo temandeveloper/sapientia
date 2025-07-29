@@ -49,7 +49,7 @@ export function ChatInput({ onSendMessage, isLoading }) {
         <motion.div 
             layout 
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className={`mx-auto ${isFocused ? 'w-full' : 'w-1/2 max-w-2xl'}`}
+            className={`mx-auto ${isFocused ? 'w-1/2' : 'w-1/4 max-w-2xl'}`}
         >
             <form 
                 ref={formRef}
@@ -60,7 +60,7 @@ export function ChatInput({ onSendMessage, isLoading }) {
                 <motion.div 
                     layout="position"
                     transition={{ duration: 0.25, type: "easeOut" }}
-                    className={`bg-[#272d36] border border-gray-600/80 shadow-2xl shadow-black/30 flex items-center gap-2 p-2
+                    className={`bg-[#272d36] border border-gray-600/80 shadow-2xl shadow-black/30 flex items-center gap-2 p-1
                         ${isFocused ? 'rounded-2xl' : 'rounded-full'}`}
                 >
                     <textarea 
@@ -75,7 +75,7 @@ export function ChatInput({ onSendMessage, isLoading }) {
                             }
                         }}
                         className="w-full bg-transparent text-slate-100 placeholder-slate-400 focus:outline-none resize-none pl-3 py-1.5 max-h-48" 
-                        placeholder={isFocused ? "Tanyakan apa saja pada Sapientia..." : "Tanya sesuatu..."}
+                        placeholder={isFocused ? "Ask me anything..." : "Sapientia is here"}
                         rows="1"
                     />
                     <AnimatePresence>

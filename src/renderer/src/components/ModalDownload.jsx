@@ -14,7 +14,7 @@ export default function ModalDownload(){
 
     useEffect(() => {
         async function downloadDependencies() {
-            await initDatabase();
+            await initDatabase(); // Initialize the database if database is not initialized
 
             let modelDownload = await getDataTable("tbSettings",[{
                 settingName: {

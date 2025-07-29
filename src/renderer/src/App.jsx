@@ -9,26 +9,77 @@ import '../assets/output.css';
 export default function App() {
     const [activeView, setActiveView] = useState('commands');
     const [messages, setMessages] = useState([]);
+    const [messagesStream, setMessagesStream] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        window.underWorld.initChat({
+            command    : "init-chat"
+        }).then((data)=>{
+            console.log("load model",data)
+        }).catch((err) => {
+            console.error("Failed to initialize chat",err)
+        });
+    }, [])
 
     // Diperbarui: Menggunakan data dummy, bukan API call
     const handleSendMessage = async (prompt) => {
         if (!prompt) return;
-
-        const userMessage = { role: "user", parts: [{ text: prompt }] };
+        let messagesId = Date.now()
+        const userMessage = { id: messagesId, role: "user", parts: [{ text: prompt }] };
         setMessages(prev => [...prev, userMessage]);
         setIsLoading(true);
 
-        // Simulasi respons AI dengan data dummy
-        setTimeout(() => {
-            const dummyResponse = {
-                role: "model",
-                parts: [{ text: `Ini adalah respons dummy untuk pertanyaan Anda: "${prompt}". Fitur API saat ini dinonaktifkan.` }]
-            };
-            setMessages(prev => [...prev, dummyResponse]);
-            setIsLoading(false);
-        }, 1500); // Tunda 1.5 detik untuk simulasi
+        window.underWorld.sendChat({
+            text    : prompt,
+            id      : messagesId,
+        });
     };
+
+    useEffect(() => {
+        const cleanListener = window.underWorld.onResponseChat((data) => {
+            if(data.status == "render"){
+                setMessagesStream(prev => {
+                    // Cek apakah sudah ada message model dengan id yang sama
+                    const idx = prev.findIndex(
+                        msg => msg.role === "model" && msg.id === data.id
+                    );
+
+                    if (idx !== -1) {
+                        // Update text pada message model yang sudah ada (streaming)
+                        const updated = [...prev];
+                        const prevText = updated[idx].parts[0].text || "";
+                        updated[idx] = {
+                            ...updated[idx],
+                            parts: [{ text: prevText + (data.response || "") }]
+                        };
+                        return updated;
+                    } else {
+                        // Jika belum ada, tambahkan message model baru
+                        return [
+                        ...prev,
+                        {
+                            id: data.id,
+                            role: "model",
+                            parts: [{ text: data.response || "" }]
+                        }
+                        ];
+                    }
+                });
+            }else if (data.status == "end") {
+                const dataMessages = {
+                    role: "model",
+                    parts: [{ text: data.response }]
+                };
+                setMessages(prev => [...prev, dataMessages]);
+                setIsLoading(false);
+            }
+        });
+
+        return () => {
+            cleanListener(); // Clean up the listener on unmount karena variable cleanListener return fungsi removelistener dari preload
+        };
+    }, [])
 
     return (
         <div className="bg-[#14171f] min-h-screen font-sans flex">
@@ -38,6 +89,7 @@ export default function App() {
             <MainContent 
                 activeView={activeView}
                 messages={messages}
+                messagesStream={messagesStream}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
             />

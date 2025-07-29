@@ -5,7 +5,7 @@ import '../../assets/xterm.css';
 import '../../assets/output.css';
 
 // Xterm.js Terminal Component (Diperbarui dengan perbaikan)
-export const XtermComponent = ({ lastMessage }) => {
+export const XtermComponent = ({ dataStreaming }) => {
     const terminalRef = useRef(null);
     const xtermInstance = useRef(null);
     const fitAddonRef = useRef(null);
@@ -52,17 +52,17 @@ export const XtermComponent = ({ lastMessage }) => {
     }, []);
 
     useEffect(() => {
-        if (lastMessage && xtermInstance.current) {
+        if (dataStreaming && xtermInstance.current) {
             xtermInstance.current.writeln('');
             xtermInstance.current.writeln(`\x1b[1;32m[SUCCESS]\x1b[0m Respon diterima dari model.`);
             xtermInstance.current.writeln(`\x1b[1;34m> OUTPUT:\x1b[0m`);
-            xtermInstance.current.write(lastMessage.parts[0].text.replace(/\n/g, '\r\n'));
+            xtermInstance.current.write(dataStreaming.parts[0].text.replace(/\n/g, '\r\n'));
             // Optionally fit terminal after writing
             if (fitAddonRef.current) {
                 setTimeout(() => fitAddonRef.current.fit(), 10);
             }
         }
-    }, [lastMessage]);
+    }, [dataStreaming]);
 
     return <div ref={terminalRef} className="h-full w-full p-2" />;
 };

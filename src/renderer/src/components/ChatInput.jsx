@@ -39,6 +39,7 @@ export function ChatInput({ onSendMessage, isLoading }) {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             const scrollHeight = textareaRef.current.scrollHeight;
+            console.log("scrollHeight",scrollHeight)
             textareaRef.current.style.height = `${scrollHeight}px`;
         }
     }, [prompt]);

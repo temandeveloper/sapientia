@@ -7,7 +7,7 @@ import '../../assets/xterm.css';
 import '../../assets/output.css';
 
 // Main Content area that switches views
-export function MainContent({ activeView, messages, onSendMessage, isLoading }) {
+export function MainContent({ activeView, messages, messagesStream, onSendMessage, isLoading }) {
     const renderView = () => {
         switch (activeView) {
             case 'commands':
@@ -27,7 +27,7 @@ export function MainContent({ activeView, messages, onSendMessage, isLoading }) 
             case 'settings':
                 return <PlaceholderView title="Settings" />;
             default:
-                return <CommandsCenter messages={messages} onSendMessage={onSendMessage} isLoading={isLoading} />;
+                return <CommandsCenter messages={messages} messagesStream={messagesStream} onSendMessage={onSendMessage} isLoading={isLoading} />;
         }
     };
 

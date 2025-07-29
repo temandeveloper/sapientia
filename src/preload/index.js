@@ -9,6 +9,16 @@ const api = {}
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('underWorld', {
+        initChat: async (data) => ipcRenderer.invoke('init-chat',data),
+        sendChat: (send) => ipcRenderer.send('send-chat',send),
+        onResponseChat: (callback) => {
+          const subscription = (_event, value) => callback(value)
+          ipcRenderer.on('response-chat', subscription)
+          // Return a function to unsubscribe from the event
+          return () => {
+            ipcRenderer.removeListener('response-chat', subscription)
+          }
+        },
         downloadModel: (config) => ipcRenderer.send('download-model',config),
         onDownloadProgress: (callback) => {
           const subscription = (_event, value) => callback(value)
@@ -19,7 +29,6 @@ if (process.contextIsolated) {
           }
         },
         notification: (notif) => ipcRenderer.send('notification',notif),
-        initModule: async (modules) => ipcRenderer.invoke('init-module',modules),
         gotoLink: (link) => {
           shell.openExternal(link)
         },

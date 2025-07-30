@@ -36,7 +36,7 @@ export function ChatInput({ onSendMessage, isLoading }) {
     }, [formRef]);
 
     useEffect(() => {
-        if (textareaRef.current) {
+        if (textareaRef.current && prompt.trim() != "") {
             textareaRef.current.style.height = 'auto';
             const scrollHeight = textareaRef.current.scrollHeight;
             console.log("scrollHeight",scrollHeight)

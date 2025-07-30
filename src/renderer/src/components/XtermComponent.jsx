@@ -9,10 +9,10 @@ export const XtermComponent = ({ dataStreaming }) => {
     const terminalRef = useRef(null);
     const xtermInstance = useRef(null);
     const fitAddonRef = useRef(null);
+    const lastStreamIdRef = useRef(null);
 
     useEffect(() => {
         if (terminalRef.current && !xtermInstance.current) {
-            // Only create Terminal and FitAddon once
             const term = new Terminal({
                 cursorBlink: true,
                 fontFamily: 'monospace',
@@ -53,13 +53,25 @@ export const XtermComponent = ({ dataStreaming }) => {
 
     useEffect(() => {
         if (dataStreaming && xtermInstance.current) {
-            xtermInstance.current.writeln('');
-            xtermInstance.current.writeln(`\x1b[1;32m[SUCCESS]\x1b[0m Respon diterima dari model.`);
-            xtermInstance.current.writeln(`\x1b[1;34m> OUTPUT:\x1b[0m`);
-            xtermInstance.current.write(dataStreaming.parts[0].text.replace(/\n/g, '\r\n'));
-            // Optionally fit terminal after writing
-            if (fitAddonRef.current) {
-                setTimeout(() => fitAddonRef.current.fit(), 10);
+            const term = xtermInstance.current;
+            const fitAddon = fitAddonRef.current;
+            const streamId = dataStreaming.id;
+            const text = dataStreaming.parts[0].text.replace(/\n/g, '\r\n');
+
+            if (lastStreamIdRef.current !== streamId) {
+                // New stream, print header and start new line
+                term.writeln('');
+                term.writeln(`\x1b[1;32m[SUCCESS]\x1b[0m Respon diterima dari model.`);
+                term.writeln(`\x1b[1;34m> OUTPUT:\x1b[0m`);
+                term.write(text);
+                lastStreamIdRef.current = streamId;
+            } else {
+                // Same stream, append text to current line
+                term.write(text);
+            }
+
+            if (fitAddon) {
+                setTimeout(() => fitAddon.fit(), 10);
             }
         }
     }, [dataStreaming]);

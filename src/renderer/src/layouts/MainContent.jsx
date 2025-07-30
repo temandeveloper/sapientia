@@ -11,7 +11,7 @@ export function MainContent({ activeView, messages, messagesStream, onSendMessag
     const renderView = () => {
         switch (activeView) {
             case 'commands':
-                return <CommandsCenter messages={messages} onSendMessage={onSendMessage} isLoading={isLoading} />;
+                return <CommandsCenter messages={messages} messagesStream={messagesStream} onSendMessage={onSendMessage} isLoading={isLoading} />;
             case 'functions':
                 return <PlaceholderView title="Tools & Functions" />;
             case 'memories':

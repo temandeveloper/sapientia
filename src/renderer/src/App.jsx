@@ -28,6 +28,7 @@ export default function App() {
         let messagesId = Date.now()
         const userMessage = { id: messagesId, role: "user", parts: [{ text: prompt }] };
         setMessages(prev => [...prev, userMessage]);
+        setMessagesStream(prev => [...prev, userMessage]);
         setIsLoading(true);
 
         window.underWorld.sendChat({
@@ -53,21 +54,23 @@ export default function App() {
                             ...updated[idx],
                             parts: [{ text: prevText + (data.response || "") }]
                         };
+
                         return updated;
                     } else {
                         // Jika belum ada, tambahkan message model baru
                         return [
-                        ...prev,
-                        {
-                            id: data.id,
-                            role: "model",
-                            parts: [{ text: data.response || "" }]
-                        }
+                            ...prev,
+                            {
+                                id: data.id,
+                                role: "model",
+                                parts: [{ text: data.response || "" }]
+                            }
                         ];
                     }
                 });
             }else if (data.status == "end") {
                 const dataMessages = {
+                    id: data.id,
                     role: "model",
                     parts: [{ text: data.response }]
                 };

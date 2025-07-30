@@ -56,7 +56,7 @@ export const XtermComponent = ({ dataStreaming }) => {
             const term = xtermInstance.current;
             const fitAddon = fitAddonRef.current;
             const streamId = dataStreaming.id;
-            const text = dataStreaming.parts[0].text.replace(/\n/g, '\r\n');
+            const text = dataStreaming.response.replace(/\n/g, '\r\n');
 
             if (lastStreamIdRef.current !== streamId) {
                 // New stream, print header and start new line

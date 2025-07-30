@@ -13,7 +13,6 @@ import { ChatMessage } from './ChatMessage';
 // Main view for the chat interface
 export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoading }) {
     const chatContainerRef = useRef(null);
-    const dataStreaming = messagesStream.filter(m => m.role === 'model').pop();
     const isChatStarted = messages.length > 0;
 
     useEffect(() => {
@@ -74,7 +73,7 @@ export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoad
                         className="w-1/2 h-full p-4 pl-0"
                     >
                         <div className="h-full w-full bg-[#0e121a] rounded-lg overflow-hidden">
-                            <XtermComponent dataStreaming={dataStreaming} />
+                            <XtermComponent dataStreaming={messagesStream} />
                         </div>
                     </motion.div>
                 )}

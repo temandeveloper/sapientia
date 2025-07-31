@@ -53,7 +53,7 @@ export function Sidebar({ activeView, setActiveView ,handleCloseModalSetting}) {
                     icon={Settings}
                     text="Settings"
                     isActive={activeView === 'settings'}
-                    onClick={()=>handleCloseModalSetting()}
+                    onClick={handleCloseModalSetting}
                 />
             </div>
         </aside>

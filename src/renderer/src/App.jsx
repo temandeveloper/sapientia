@@ -5,6 +5,7 @@ import { MainContent } from './layouts/MainContent';
 import ModalDownload from './components/ModalDownload';
 import ModalSettings from './components/ModalSettings';
 import LoadingOverlay from './components/LoadingOverlay';
+import { getDataTable } from './lib/idbHelper';
 import '../assets/output.css';
 
 // Main App Component
@@ -20,15 +21,26 @@ export default function App() {
     useEffect(() => {
         clearTimeout(singleExec)
         singleExec = setTimeout(async () => {
-            window.underWorld.initChat({
-                command    : "init-chat"
-            }).then((data)=>{
+            let modelPath = await getDataTable("tbSettings",[{
+                settingName: {
+                    in : ["base-model"]
+                }
+            }])
+
+            if(modelPath[0].value.modelPath != ""){
+                window.underWorld.initChat({
+                    command : "init-chat",
+                    path    : modelPath[0].value.modelPath
+                }).then((data)=>{
+                    setShowLoadingOverlay(0)
+                    console.log("lshowLoadingOverlay",showLoadingOverlay)
+                }).catch((err) => {
+                    console.error("Failed to initialize chat",err)
+                    alert("something wrong tell developer to solve this")
+                });
+            }else{
                 setShowLoadingOverlay(0)
-                console.log("lshowLoadingOverlay",showLoadingOverlay)
-            }).catch((err) => {
-                console.error("Failed to initialize chat",err)
-                alert("something wrong tell developer to solve this")
-            });
+            }
         }, 500);
     }, [])
 

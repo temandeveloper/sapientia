@@ -57,6 +57,7 @@ function createWindow() {
 
 ipcMain.on('download-model', async (event, data) => {
   try {
+
     console.log('start download model',data.modelUri)
     const modelPath = path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
     if (fs.existsSync(modelPath)) {
@@ -70,6 +71,7 @@ ipcMain.on('download-model', async (event, data) => {
         dirPath: path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
       })
     ]
+
     const combinedDownloader = await combineModelDownloaders(downloaders, {
       skipExisting: true,
       deleteTempFileOnCancel: true,
@@ -78,6 +80,7 @@ ipcMain.on('download-model', async (event, data) => {
         const total = formatBytes(progress.totalSize)
         const percentage = calculateProgress(progress.downloadedSize, progress.totalSize)
         event.sender.send('download-progress', {
+          path: "", //complete download path
           downloaded: downloaded,
           total: total,
           percentage: percentage,
@@ -86,11 +89,23 @@ ipcMain.on('download-model', async (event, data) => {
         })
       }
     })
+
     console.log(
       'download path start : ',
       path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf')
     )
+
     const [model1Path] = await combinedDownloader.download()
+
+    event.sender.send('download-progress', {
+      path: model1Path,
+      downloaded: 0,
+      total: 0,
+      percentage: 0,
+      metadata: data.metadata,
+      settingName: data.settingName
+    })
+
     console.log('downloaded model : ', model1Path)
   } catch (error) {
     console.error('Failed to download model:', error)
@@ -128,7 +143,7 @@ ipcMain.handle('init-chat', async (event, data) => {
       fs.existsSync(path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf'))
     )
     if (fs.existsSync(path.join(app.getPath('userData'), 'gemma-2-2b-it-Q4_K_M.gguf'))) {
-      await initializeAiChat()
+      await initializeAiChat(data)
       return {
         status: 200
       }
@@ -150,16 +165,13 @@ ipcMain.handle('init-chat', async (event, data) => {
 })
 
 
-async function initializeAiChat() {
+async function initializeAiChat(data) {
   try {
+    console.log("initializeAiChat path :",data.path)
     const llama = await getLlama()
     console.log('GPU type:', llama.gpu)
     const model = await llama.loadModel({
-      modelPath: path.join(
-        app.getPath('userData'),
-        'gemma-2-2b-it-Q4_K_M.gguf',
-        'hf_AhmadFadil_gemma-2-2b-it-Q4_K_M.gguf'
-      )
+      modelPath: data.path
     })
 
     const context = await model.createContext()

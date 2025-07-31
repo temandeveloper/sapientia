@@ -55,26 +55,36 @@ export default function ModalDownload(){
 
     useEffect(() => {
         const cleanListener = window.underWorld.onDownloadProgress((data) => { // Listen ini ngebug tertrigger beberapa kali
-
-            // Update the download progress state
-            setDownloadProgress(data);
-
-            if(parseFloat(data.percentage) >= 100){
+            if(data.path != ""){
                 try {
                     clearTimeout(singleExec)
                     singleExec = setTimeout(async () => {
                         data.metadata.statusDownloaded = true;
+                        data.metadata.modelPath = data.path;
+
                         updateDataTable("tbSettings",{
                             value       : data.metadata,
                             datetime    : Date.now(),
                         },{settingName : data.settingName})
                         modalRef.current.close()
+                     
+                        window.underWorld.initChat({
+                            command : "init-chat",
+                            path    : data.path,
+                        }).then((data)=>{
+                            window.underWorld.notification({ title: "RabBit Info", body: `Download model is success` });
+                        }).catch((err) => {
+                            console.error("Failed to initialize chat",err)
+                            alert("something wrong to initialize chat tell developer to solve this issue")
+                        });
                         console.log("Download model is success")
-                        window.underWorld.notification({ title: "RabBit Info", body: `Download model is success` });
                     }, 1500); // should match OS multi-click speed
                 } catch (error) {
                     console.log("Download model failed", error);
                 }
+            }else{
+                // Update the download progress state
+                setDownloadProgress(data);
             }
         });
 

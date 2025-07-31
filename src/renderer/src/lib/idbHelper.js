@@ -70,9 +70,10 @@ export const initDatabase = async () => {
                 datetime    : Date.now(),
                 settingName : "base-model",
                 value       : {
-                    modelName   : "gemma-2-2b-it-Q4_K_M.gguf",
-                    modelUri    : "hf:AhmadFadil/gemma-2-2b-it-GGUF/gemma-2-2b-it-Q4_K_M.gguf",
-                    source      : "https://huggingface.co/google/gemma-2-2b-it",
+                    modelName   : "gemma-3n-E2B-it-Q4_K_M.gguf",
+                    modelPath   : "",
+                    modelUri    : "hf:AhmadFadil/gemma-3n-E2B-it-text-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf",
+                    source      : "https://huggingface.co/google/gemma-3n-E2B-it",
                     statusDownloaded : false,
                 },
             })
@@ -82,6 +83,7 @@ export const initDatabase = async () => {
                 settingName : "embedding-model",
                 value       : {
                     modelName   : "bge-small-en-v1.5-q8_0.gguf",
+                    modelPath    : "",
                     modelUri    : "hf:CompendiumLabs/bge-small-en-v1.5-gguf/bge-small-en-v1.5-q8_0.gguf",
                     source      : "https://huggingface.co/BAAI/bge-small-en-v1.5",
                     statusDownloaded : false,

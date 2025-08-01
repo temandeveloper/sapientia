@@ -98,7 +98,7 @@ export const initDatabase = async () => {
         datetime: Date.now(),
         settingName: 'model-configuration',
         value: {
-          systemp_rompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
+          system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
                             Anda HARUS mengikuti aturan prioritas ini:
 
                             **ATURAN 1: PANGGIL ALAT (Tool Call)**
@@ -216,7 +216,7 @@ export const initDatabase = async () => {
 
 export const defaultModelConfig = async () => {
     const defaultValue = {
-        systemp_rompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
+        system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
                           Anda HARUS mengikuti aturan prioritas ini:
 
                           **ATURAN 1: PANGGIL ALAT (Tool Call)**

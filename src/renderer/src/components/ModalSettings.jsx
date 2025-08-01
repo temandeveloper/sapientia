@@ -50,7 +50,7 @@ export default function ModalSettings({ setShowModalSetting }) {
             setTopp(modelConfig.top_p)
             setTopk(modelConfig.top_k)
             setMinp(modelConfig.min_p)
-            setSystemPrompt(modelConfig.systemp_rompt)
+            setSystemPrompt(modelConfig.system_prompt)
             setOutputSchema(modelConfig.output_schema)
 
         })();
@@ -61,7 +61,7 @@ export default function ModalSettings({ setShowModalSetting }) {
         console.log("update",{temperature,topp,topk,minp,systemPrompt,outputSchema})
         await updateDataTable("tbSettings",{
             value       : {
-                systemp_rompt: systemPrompt,
+                system_prompt: systemPrompt,
                 temperature: temperature,
                 top_p: topp,
                 top_k: topk,

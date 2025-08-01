@@ -5,7 +5,7 @@ import { MainContent } from './layouts/MainContent';
 import ModalDownload from './components/ModalDownload';
 import ModalSettings from './components/ModalSettings';
 import LoadingOverlay from './components/LoadingOverlay';
-import { getDataTable } from './lib/idbHelper';
+import { getDataTable,defaultModelConfig } from './lib/idbHelper';
 import '../assets/output.css';
 
 // Main App Component
@@ -27,10 +27,25 @@ export default function App() {
                 }
             }])
 
+            let modelConfig = await getDataTable("tbSettings",[{
+                settingName: {
+                    in : ["model-configuration"]
+                }
+            }])
+
+            if(modelConfig.length >= 1){
+                modelConfig = modelConfig[0].value;
+            }else{
+                modelConfig = await defaultModelConfig()
+            }
+
+            console.log(JSON.parse(modelConfig.output_schema))
+
             if(modelPath[0].value.modelPath != ""){
                 window.underWorld.initChat({
                     command : "init-chat",
-                    path    : modelPath[0].value.modelPath
+                    path    : modelPath[0].value.modelPath,
+                    config  : modelConfig
                 }).then((data)=>{
                     setShowLoadingOverlay(false)
                     console.log("lshowLoadingOverlay",showLoadingOverlay)

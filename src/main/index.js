@@ -192,7 +192,7 @@ async function openContextModel(dataConfig){
     sessionChat   = new LlamaChatSession({
       contextSequence: context.getSequence(),
       chatWrapper: new Llama3_1ChatWrapper(),
-      systemPrompt: dataConfig.system_prompt
+      systemPrompt: dataConfig.system_prompt // line ini menyebabkan error
     })
     console.log('chat start')
   } catch (error) {

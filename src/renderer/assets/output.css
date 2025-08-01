@@ -58,8 +58,6 @@
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
-    --ease-out: cubic-bezier(0, 0, 0.2, 1);
-    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --animate-spin: spin 1s linear infinite;
     --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     --default-transition-duration: 150ms;
@@ -1244,9 +1242,6 @@
     border-right-style: var(--tw-border-style);
     border-right-width: 1px;
   }
-  .border-\[\#35567b\] {
-    border-color: #35567b;
-  }
   .border-\[\#565869\] {
     border-color: #565869;
   }
@@ -1288,9 +1283,6 @@
   }
   .bg-\[\#14171f\] {
     background-color: #14171f;
-  }
-  .bg-\[\#47698F\] {
-    background-color: #47698F;
   }
   .bg-gray-50 {
     background-color: var(--color-gray-50);
@@ -1421,9 +1413,6 @@
   }
   .progress-info {
     color: var(--color-info);
-  }
-  .text-\[\#47698F\] {
-    color: #47698F;
   }
   .text-black {
     color: var(--color-black);

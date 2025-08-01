@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import { 
     Save
 } from 'lucide-react';
-import { initDatabase,getDataTable,updateDataTable,insertDataTable } from '../lib/idbHelper';
+import { getDataTable,updateDataTable,defaultModelConfig } from '../lib/idbHelper';
 
-export default function ModalSettings({ showModalSetting, setShowModalSetting }) {
+export default function ModalSettings({ setShowModalSetting }) {
     const modalRef = useRef(null);
     const [progressSave,setProgressSave] = useState(false)
     const [temperature,setTemprature] = useState(0.8)
@@ -17,11 +17,11 @@ export default function ModalSettings({ showModalSetting, setShowModalSetting })
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === "Escape") {
-                setShowModalSetting(0);
+                setShowModalSetting(false);
             }
         };
 
-        if (modalRef.current && showModalSetting === 1) {
+        if (modalRef.current) {
             modalRef.current.showModal();
             window.addEventListener("keydown", handleEsc);
         }
@@ -29,7 +29,7 @@ export default function ModalSettings({ showModalSetting, setShowModalSetting })
         return () => {
             window.removeEventListener("keydown", handleEsc);
         };
-    }, [showModalSetting, setShowModalSetting]);
+    }, [setShowModalSetting]);
 
     useEffect(()=>{
         (async () => {
@@ -38,21 +38,23 @@ export default function ModalSettings({ showModalSetting, setShowModalSetting })
                     in : ["model-configuration"]
                 }
             }])
-            console.log(modelConfig)
+            console.log("modelConfig",modelConfig)
 
-            setTemprature(modelConfig[0].value.temperature)
-            setTopp(modelConfig[0].value.top_p)
-            setTopk(modelConfig[0].value.top_k)
-            setMinp(modelConfig[0].value.min_p)
-            setSystemPrompt(modelConfig[0].value.systemp_rompt)
-            setOutputSchema(modelConfig[0].value.output_schema)
+            if(modelConfig.length >= 1){
+                modelConfig = modelConfig[0].value;
+            }else{
+                modelConfig = await defaultModelConfig()
+            }
+
+            setTemprature(modelConfig.temperature)
+            setTopp(modelConfig.top_p)
+            setTopk(modelConfig.top_k)
+            setMinp(modelConfig.min_p)
+            setSystemPrompt(modelConfig.systemp_rompt)
+            setOutputSchema(modelConfig.output_schema)
 
         })();
     },[])
-
-    const handleClose = () => {
-        setShowModalSetting(0);
-    };
 
     const handleApply = async () => {
         setProgressSave(true)
@@ -69,7 +71,7 @@ export default function ModalSettings({ showModalSetting, setShowModalSetting })
             datetime    : Date.now(),
         },{settingName : "model-configuration"})
 
-        handleClose();
+        setShowModalSetting(false);
     };
 
     return (
@@ -77,7 +79,7 @@ export default function ModalSettings({ showModalSetting, setShowModalSetting })
             <dialog ref={modalRef} id="modal-settings" className="modal">
                 <div className="modal-box w-2/5 max-w-5xl">
                     <form method="dialog">
-                        <button onClick={handleClose} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                        <button onClick={() => setShowModalSetting(false)} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
                     </form>
                     <h3 className="font-bold text-lg">Settings</h3>
                     <span className='text-sm'>Customize your model for more possibilities</span>

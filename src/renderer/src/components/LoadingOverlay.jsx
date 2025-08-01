@@ -1,21 +1,16 @@
 import React, { useRef, useEffect } from 'react';
 
-export default function LoadingOverlay({showLoadingOverlay}){
+export default function LoadingOverlay(){
     const modalRef = useRef(null);
 
     useEffect(() => {
-        console.log("showLoadingOverlay",showLoadingOverlay)
         if (modalRef.current) {
-            if(showLoadingOverlay === 1){
-                modalRef.current.showModal()
-                modalRef.current.addEventListener("keydown", (e) => {
-                    e.preventDefault();
-                });
-            }else{
-                modalRef.current.close()
-            }
+            modalRef.current.showModal()
+            modalRef.current.addEventListener("keydown", (e) => {
+                e.preventDefault();
+            });
         }
-    }, [showLoadingOverlay])
+    }, [])
 
     return (
         <>

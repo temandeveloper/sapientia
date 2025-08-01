@@ -14,8 +14,8 @@ export default function App() {
     const [messages, setMessages] = useState([]);
     const [messagesStream, setMessagesStream] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [showModalSetting, setShowModalSetting] = useState(0);
-    const [showLoadingOverlay, setShowLoadingOverlay] = useState(1);
+    const [showModalSetting, setShowModalSetting] = useState(false);
+    const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
     let singleExec = null;
 
     useEffect(() => {
@@ -32,14 +32,14 @@ export default function App() {
                     command : "init-chat",
                     path    : modelPath[0].value.modelPath
                 }).then((data)=>{
-                    setShowLoadingOverlay(0)
+                    setShowLoadingOverlay(false)
                     console.log("lshowLoadingOverlay",showLoadingOverlay)
                 }).catch((err) => {
                     console.error("Failed to initialize chat",err)
                     alert("something wrong tell developer to solve this")
                 });
             }else{
-                setShowLoadingOverlay(0)
+                setShowLoadingOverlay(false)
             }
         }, 500);
     }, [])
@@ -84,8 +84,12 @@ export default function App() {
 
     return (
         <div className="bg-[#14171f] min-h-screen font-sans flex">
-            <LoadingOverlay showLoadingOverlay={showLoadingOverlay}/>
-            <ModalSettings showModalSetting={showModalSetting} setShowModalSetting={setShowModalSetting} />
+            {showLoadingOverlay && (
+                <LoadingOverlay/>
+            )}
+            {showModalSetting && (
+                <ModalSettings setShowModalSetting={setShowModalSetting} />
+            )}
             <ModalDownload/>
             <CustomScrollbarStyles />
             <Sidebar activeView={activeView} setActiveView={setActiveView} handleCloseModalSetting={handleCloseModalSetting} />

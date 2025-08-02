@@ -32,7 +32,7 @@
     "html5-qrcode": "^2.3.8",
     "jsstore": "^4.9.0",
     "lucide-react": "^0.525.0",
-    "node-llama-cpp": "^3.10.0",
+    "node-llama-cpp": "^3.11.0",
     "qrcode.react": "^4.2.0",
     "recharts": "^3.1.0"
   },

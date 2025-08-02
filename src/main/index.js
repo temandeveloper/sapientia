@@ -14,7 +14,7 @@ import {
   LlamaChatSession,
   createModelDownloader,
   combineModelDownloaders,
-  Llama3_1ChatWrapper
+  JinjaTemplateChatWrapper
 } from 'node-llama-cpp'
 import fs from 'fs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -171,11 +171,11 @@ ipcMain.handle('init-chat', async (event, data) => {
 
 async function initializeAiChat(data) {
   try {
-    LlmEngine = await getLlama()
+    LlmEngine = await getLlama("lastBuild")
     console.log("initializeAiChat path :",data.path)
     console.log('GPU type:', LlmEngine.gpu)
     modelStart = await LlmEngine.loadModel({
-      modelPath: data.path
+      modelPath: data.path,
     })
 
     console.log('load model')
@@ -188,10 +188,15 @@ async function openContextModel(dataConfig){
   try {
     console.log(JSON.parse(dataConfig.output_schema),dataConfig.system_prompt)
     grammar = await LlmEngine.createGrammarForJsonSchema(JSON.parse(dataConfig.output_schema));
+
+    const chatWrapper = new JinjaTemplateChatWrapper({
+        template: "{{ bos_token }}\n{%- if messages[0]['role'] == 'system' -%}\n    {%- if messages[0]['content'] is string -%}\n        {%- set first_user_prefix = messages[0]['content'] + '\n\n' -%}\n    {%- else -%}\n        {%- set first_user_prefix = messages[0]['content'][0]['text'] + '\n\n' -%}\n    {%- endif -%}\n    {%- set loop_messages = messages[1:] -%}\n{%- else -%}\n    {%- set first_user_prefix = \"\" -%}\n    {%- set loop_messages = messages -%}\n{%- endif -%}\n{%- for message in loop_messages -%}\n    {%- if (message['role'] == 'user') != (loop.index0 % 2 == 0) -%}\n        {{ raise_exception(\"Conversation roles must alternate user/assistant/user/assistant/...\") }}\n    {%- endif -%}\n    {%- if (message['role'] == 'assistant') -%}\n        {%- set role = \"model\" -%}\n    {%- else -%}\n        {%- set role = message['role'] -%}\n    {%- endif -%}\n    {{ '<start_of_turn>' + role + '\n' + (first_user_prefix if loop.first else \"\") }}\n    {%- if message['content'] is string -%}\n        {{ message['content'] | trim }}\n    {%- elif message['content'] is iterable -%}\n        {%- for item in message['content'] -%}\n            {%- if item['type'] == 'audio' -%}\n                {{ '<audio_soft_token>' }}\n            {%- elif item['type'] == 'image' -%}\n                {{ '<image_soft_token>' }}\n            {%- elif item['type'] == 'text' -%}\n                {{ item['text'] | trim }}\n            {%- endif -%}\n        {%- endfor -%}\n    {%- else -%}\n        {{ raise_exception(\"Invalid content type\") }}\n    {%- endif -%}\n    {{ '<end_of_turn>\n' }}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{'<start_of_turn>model\n'}}\n{%- endif -%}\n",
+    });
+
     const context = await modelStart.createContext()
     sessionChat   = new LlamaChatSession({
       contextSequence: context.getSequence(),
-      chatWrapper: new Llama3_1ChatWrapper(),
+      chatWrapper: chatWrapper,
       systemPrompt: dataConfig.system_prompt // line ini menyebabkan error
     })
     console.log('chat start')

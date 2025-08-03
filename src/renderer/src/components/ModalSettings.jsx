@@ -38,7 +38,6 @@ export default function ModalSettings({ setShowModalSetting }) {
                     in : ["model-configuration"]
                 }
             }])
-            console.log("modelConfig",modelConfig)
 
             if(modelConfig.length >= 1){
                 modelConfig = modelConfig[0].value;
@@ -58,7 +57,6 @@ export default function ModalSettings({ setShowModalSetting }) {
 
     const handleApply = async () => {
         setProgressSave(true)
-        console.log("update",{temperature,topp,topk,minp,systemPrompt,outputSchema})
         await updateDataTable("tbSettings",{
             value       : {
                 system_prompt: systemPrompt,

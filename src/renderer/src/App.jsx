@@ -5,7 +5,7 @@ import { MainContent } from './layouts/MainContent';
 import ModalDownload from './components/ModalDownload';
 import ModalSettings from './components/ModalSettings';
 import LoadingOverlay from './components/LoadingOverlay';
-import { getDataTable,defaultModelConfig } from './lib/idbHelper';
+import { initDatabase,getDataTable,defaultModelConfig } from './lib/idbHelper';
 import '../assets/output.css';
 
 // Main App Component
@@ -16,45 +16,52 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [showModalSetting, setShowModalSetting] = useState(false);
     const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+    const [activeDownload, setActiveDownload] = useState(false);
     let singleExec = null;
 
     useEffect(() => {
         clearTimeout(singleExec)
         singleExec = setTimeout(async () => {
-            let modelPath = await getDataTable("tbSettings",[{
-                settingName: {
-                    in : ["base-model"]
-                }
-            }])
-
-            let modelConfig = await getDataTable("tbSettings",[{
-                settingName: {
-                    in : ["model-configuration"]
-                }
-            }])
-
-            if(modelConfig.length >= 1){
-                modelConfig = modelConfig[0].value;
+            const dataInit = await initDatabase(); // Initialize the database if database is not initialized
+            if(dataInit){
+                setActiveDownload(true)
             }else{
-                modelConfig = await defaultModelConfig()
-            }
+                const modelPath = await getDataTable("tbSettings",[{
+                    settingName: {
+                        in : ["base-model"]
+                    }
+                }])
 
-            console.log(JSON.parse(modelConfig.output_schema))
+                if(modelPath[0].value.statusDownloaded === false){
+                    setActiveDownload(true)
+                }else{
+                    let modelConfig = await getDataTable("tbSettings",[{
+                        settingName: {
+                            in : ["model-configuration"]
+                        }
+                    }])
 
-            if(modelPath[0].value.modelPath != ""){
-                window.underWorld.initChat({
-                    command : "init-chat",
-                    path    : modelPath[0].value.modelPath,
-                    config  : modelConfig
-                }).then((data)=>{
-                    setShowLoadingOverlay(false)
-                    console.log("lshowLoadingOverlay",showLoadingOverlay)
-                }).catch((err) => {
-                    console.error("Failed to initialize chat",err)
-                    alert("something wrong tell developer to solve this")
-                });
-            }else{
-                setShowLoadingOverlay(false)
+                    if(modelConfig.length >= 1){
+                        modelConfig = modelConfig[0].value;
+                    }else{
+                        modelConfig = await defaultModelConfig()
+                    }
+
+                    if(modelPath[0].value.modelPath != ""){
+                        window.underWorld.initChat({
+                            command : "init-chat",
+                            path    : modelPath[0].value.modelPath,
+                            config  : modelConfig
+                        }).then((data)=>{
+                            setShowLoadingOverlay(false)
+                        }).catch((err) => {
+                            console.error("Failed to initialize chat",err)
+                            alert("something wrong tell developer to solve this")
+                        });
+                    }else{
+                        setShowLoadingOverlay(false)
+                    }
+                }
             }
         }, 500);
     }, [])
@@ -105,7 +112,9 @@ export default function App() {
             {showModalSetting && (
                 <ModalSettings setShowModalSetting={setShowModalSetting} />
             )}
-            <ModalDownload/>
+            {activeDownload && (
+                <ModalDownload setActiveDownload={setActiveDownload} setShowLoadingOverlay={setShowLoadingOverlay}/>
+            )}
             <CustomScrollbarStyles />
             <Sidebar activeView={activeView} setActiveView={setActiveView} handleCloseModalSetting={handleCloseModalSetting} />
             <MainContent 

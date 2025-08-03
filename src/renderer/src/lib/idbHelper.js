@@ -70,139 +70,143 @@ export const initDatabase = async () => {
 
     const isDbCreated = await connection.initDb(db)
     if (isDbCreated === true) {
-      insertDataTable('tbSettings', {
-        datetime: Date.now(),
-        settingName: 'base-model',
-        value: {
-          modelName: 'gemma-3n-E2B-it-Q4_K_M.gguf',
-          modelPath: '',
-          modelUri: 'hf:AhmadFadil/gemma-3n-E2B-it-text-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf',
-          source: 'https://huggingface.co/google/gemma-3n-E2B-it',
-          statusDownloaded: false
-        }
-      })
+      const inserted = await connection.insert({
+        into: 'tbSettings',
+        values: [
+          {
+            datetime: Date.now(),
+            settingName: 'base-model',
+            value: {
+              modelName: 'gemma-3n-E2B-it-Q4_K_M.gguf',
+              modelPath: '',
+              modelUri: 'hf:AhmadFadil/gemma-3n-E2B-it-text-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf',
+              source: 'https://huggingface.co/google/gemma-3n-E2B-it',
+              statusDownloaded: false
+            }
+          },
+          {
+            datetime: Date.now(),
+            settingName: 'embedding-model',
+            value: {
+              modelName: 'bge-small-en-v1.5-q8_0.gguf',
+              modelPath: '',
+              modelUri: 'hf:CompendiumLabs/bge-small-en-v1.5-gguf/bge-small-en-v1.5-q8_0.gguf',
+              source: 'https://huggingface.co/BAAI/bge-small-en-v1.5',
+              statusDownloaded: false
+            }
+          },
+          {
+            datetime: Date.now(),
+            settingName: 'model-configuration',
+            value: {
+              system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
+                                Anda HARUS mengikuti aturan prioritas ini:
 
-      insertDataTable('tbSettings', {
-        datetime: Date.now(),
-        settingName: 'embedding-model',
-        value: {
-          modelName: 'bge-small-en-v1.5-q8_0.gguf',
-          modelPath: '',
-          modelUri: 'hf:CompendiumLabs/bge-small-en-v1.5-gguf/bge-small-en-v1.5-q8_0.gguf',
-          source: 'https://huggingface.co/BAAI/bge-small-en-v1.5',
-          statusDownloaded: false
-        }
-      })
+                                **ATURAN 1: PANGGIL ALAT (Tool Call)**
+                                Jika permintaan pengguna mengandung salah satu dari topik berikut, Anda WAJIB menggunakan format "Tool Call" dengan 'tool_name: "getInternetInfo"':
+                                - **Cuaca** (contoh: "bagaimana cuaca hari ini?")
+                                - **Berita atau peristiwa terkini** (contoh: "apa berita terbaru?")
+                                - **Harga Saham** atau data finansial (contoh: "harga saham NVIDIA?")
+                                - **Informasi tentang orang atau perusahaan spesifik** (contoh: "siapa CEO Astral System?")
+                                - **Permintaan apa pun yang mengandung kata "saat ini", "terbaru", "sekarang"**.
 
-      insertDataTable('tbSettings', {
-        datetime: Date.now(),
-        settingName: 'model-configuration',
-        value: {
-          system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
-                            Anda HARUS mengikuti aturan prioritas ini:
+                                **PENTING**: JANGAN PERNAH mencoba menjawab topik-topik di atas menggunakan pengetahuan internal Anda. Anda WAJIB memanggil 'getInternetInfo'.
 
-                            **ATURAN 1: PANGGIL ALAT (Tool Call)**
-                            Jika permintaan pengguna mengandung salah satu dari topik berikut, Anda WAJIB menggunakan format "Tool Call" dengan 'tool_name: "getInternetInfo"':
-                            - **Cuaca** (contoh: "bagaimana cuaca hari ini?")
-                            - **Berita atau peristiwa terkini** (contoh: "apa berita terbaru?")
-                            - **Harga Saham** atau data finansial (contoh: "harga saham NVIDIA?")
-                            - **Informasi tentang orang atau perusahaan spesifik** (contoh: "siapa CEO Astral System?")
-                            - **Permintaan apa pun yang mengandung kata "saat ini", "terbaru", "sekarang"**.
+                                **ATURAN 2: JAWABAN KODE (Code Answer)**
+                                Jika pengguna secara eksplisit meminta untuk dibuatkan **kode, skrip, atau sintaks**, Anda HARUS menggunakan format "Code Answer".
 
-                            **PENTING**: JANGAN PERNAH mencoba menjawab topik-topik di atas menggunakan pengetahuan internal Anda. Anda WAJIB memanggil 'getInternetInfo'.
+                                **ATURAN 3: JAWABAN LANGSUNG (Direct Answer)**
+                                Untuk SEMUA permintaan LAINNYA yang tidak termasuk dalam Aturan 1 atau 2 (misalnya, pengetahuan umum, pertanyaan sejarah, terjemahan, percakapan), gunakan format "Direct Answer".
 
-                            **ATURAN 2: JAWABAN KODE (Code Answer)**
-                            Jika pengguna secara eksplisit meminta untuk dibuatkan **kode, skrip, atau sintaks**, Anda HARUS menggunakan format "Code Answer".
+                                ---
+                                **CONTOH WAJIB DIIKUTI:**
 
-                            **ATURAN 3: JAWABAN LANGSUNG (Direct Answer)**
-                            Untuk SEMUA permintaan LAINNYA yang tidak termasuk dalam Aturan 1 atau 2 (misalnya, pengetahuan umum, pertanyaan sejarah, terjemahan, percakapan), gunakan format "Direct Answer".
-
-                            ---
-                            **CONTOH WAJIB DIIKUTI:**
-
-                            1.  **Pengguna**: bagaimana kondisi saham nvidia saat ini
-                                **Anda**:
-                                {
-                                "tool_name": "getInternetInfo",
-                                "parameters": {
-                                    "query": "harga saham NVIDIA terkini"
-                                }
-                                }
-
-                            2.  **Pengguna**: cuaca di surabaya hari ini bagaimana?
-                                **Anda**:
-                                {
-                                "tool_name": "getInternetInfo",
-                                "parameters": {
-                                    "query": "cuaca Surabaya hari ini"
-                                }
-                                }
-
-                            3.  **Pengguna**: tolong buatkan saya kode kotlin sederhana
-                                **Anda**:
-                                {
-                                "code": "fun main() {\n    println(\"Hello, Kotlin World!\")\n}",
-                                "explanation": "Ini adalah fungsi 'main' dasar dalam Kotlin yang mencetak 'Hello, Kotlin World!' ke konsol. Ini adalah titik awal untuk setiap aplikasi Kotlin."
-                                }
-
-                            4.  **Pengguna**: jelaskan relativitas umum
-                                **Anda**:
-                                {
-                                "answer": "Relativitas Umum adalah teori gravitasi yang dikembangkan oleh Albert Einstein, yang menjelaskan gravitasi sebagai kelengkungan ruang-waktu yang disebabkan oleh massa dan energi."
-                                }`,
-          temperature: 0.8,
-          top_p: 0.95,
-          top_k: 40,
-          min_p: 0.05,
-          output_schema: `{
-                            "$schema": "http://json-schema.org/draft-07/schema#",
-                            "title": "Multi-Purpose Model Response",
-                            "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, atau jawaban kode.",
-                            "oneOf": [
-                                {
-                                "title": "Tool Call",
-                                "type": "object",
-                                "properties": {
-                                    "tool_name": {
-                                    "type": "string",
-                                    "description": "Nama fungsi yang akan dipanggil.",
-                                    "enum": ["getInternetInfo"]
-                                    },
+                                1.  **Pengguna**: bagaimana kondisi saham nvidia saat ini
+                                    **Anda**:
+                                    {
+                                    "tool_name": "getInternetInfo",
                                     "parameters": {
+                                        "query": "harga saham NVIDIA terkini"
+                                    }
+                                    }
+
+                                2.  **Pengguna**: cuaca di surabaya hari ini bagaimana?
+                                    **Anda**:
+                                    {
+                                    "tool_name": "getInternetInfo",
+                                    "parameters": {
+                                        "query": "cuaca Surabaya hari ini"
+                                    }
+                                    }
+
+                                3.  **Pengguna**: tolong buatkan saya kode kotlin sederhana
+                                    **Anda**:
+                                    {
+                                    "code": "fun main() {\n    println(\"Hello, Kotlin World!\")\n}",
+                                    "explanation": "Ini adalah fungsi 'main' dasar dalam Kotlin yang mencetak 'Hello, Kotlin World!' ke konsol. Ini adalah titik awal untuk setiap aplikasi Kotlin."
+                                    }
+
+                                4.  **Pengguna**: jelaskan relativitas umum
+                                    **Anda**:
+                                    {
+                                    "answer": "Relativitas Umum adalah teori gravitasi yang dikembangkan oleh Albert Einstein, yang menjelaskan gravitasi sebagai kelengkungan ruang-waktu yang disebabkan oleh massa dan energi."
+                                    }`,
+              temperature: 0.8,
+              top_p: 0.95,
+              top_k: 40,
+              min_p: 0.05,
+              output_schema: `{
+                                "$schema": "http://json-schema.org/draft-07/schema#",
+                                "title": "Multi-Purpose Model Response",
+                                "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, atau jawaban kode.",
+                                "oneOf": [
+                                    {
+                                    "title": "Tool Call",
                                     "type": "object",
                                     "properties": {
-                                        "query": {
+                                        "tool_name": {
                                         "type": "string",
-                                        "description": "Topik atau kata kunci pencarian yang spesifik untuk dicari di internet."
+                                        "description": "Nama fungsi yang akan dipanggil.",
+                                        "enum": ["getInternetInfo"]
+                                        },
+                                        "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "query": {
+                                            "type": "string",
+                                            "description": "Topik atau kata kunci pencarian yang spesifik untuk dicari di internet."
+                                            }
+                                        },
+                                        "required": ["query"]
                                         }
                                     },
-                                    "required": ["query"]
+                                    "required": ["tool_name", "parameters"]
+                                    },
+                                    {
+                                    "title": "Direct Answer",
+                                    "type": "object",
+                                    "properties": { "answer": { "type": "string" } },
+                                    "required": ["answer"]
+                                    },
+                                    {
+                                    "title": "Code Answer",
+                                    "type": "object",
+                                    "properties": {
+                                        "code": { "type": "string" },
+                                        "explanation": { "type": "string" }
+                                    },
+                                    "required": ["code", "explanation"]
                                     }
-                                },
-                                "required": ["tool_name", "parameters"]
-                                },
-                                {
-                                "title": "Direct Answer",
-                                "type": "object",
-                                "properties": { "answer": { "type": "string" } },
-                                "required": ["answer"]
-                                },
-                                {
-                                "title": "Code Answer",
-                                "type": "object",
-                                "properties": {
-                                    "code": { "type": "string" },
-                                    "explanation": { "type": "string" }
-                                },
-                                "required": ["code", "explanation"]
-                                }
-                            ]
-                        }`
-        }
+                                ]
+                            }`
+            }
+          }
+        ],
+        return: true
       })
 
       console.log('db created')
-      return true
+      return inserted
     } else {
       console.log('db opened')
       return false

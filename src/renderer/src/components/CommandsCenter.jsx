@@ -51,9 +51,6 @@ export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoad
                                 {messages.map((msg, index) => <ChatMessage key={index} message={msg} />)}
                                 {isLoading && (
                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-4 my-4">
-                                        <div className="p-2 rounded-full bg-sky-500">
-                                            <Bot className="w-6 h-6 text-white animate-pulse"/>
-                                        </div>
                                         <div className="p-4 animate-pulse rounded-xl bg-[#272d36] text-slate-400">
                                             Sapientia is still thinking...
                                         </div>

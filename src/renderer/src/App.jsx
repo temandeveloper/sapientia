@@ -92,13 +92,23 @@ export default function App() {
             if(data.status == "render"){
                 setMessagesStream({ id: data.id, response: data.response });
             }else if (data.status == "end") {
-                const dataMessages = {
-                    id: data.id,
-                    role: "model",
-                    parts: [{ text: data.response }]
-                };
-                setMessages(prev => [...prev, dataMessages]);
-                setIsLoading(false);
+                try {
+                    let jsonResponse = JSON.parse(data.response);
+                    
+                    if(jsonResponse?.answer){
+                        const dataMessages = {
+                            id: data.id,
+                            role: "model",
+                            parts: [{ text: jsonResponse.answer }]
+                        };
+                        setMessages(prev => [...prev, dataMessages]);
+                    }
+                    
+                    setIsLoading(false);
+
+                } catch (error) {
+                    console.error("Gagal mem-parsing JSON dari respons:", error);
+                }
             }
         });
 

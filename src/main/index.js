@@ -315,9 +315,9 @@ class ChatManager {
             status: 'render'
           })
         },
-          temperature: data.config.temperature,
-          topK: data.config.top_k,
-          topP: data.config.top_p,
+          // temperature: data.config.temperature,
+          // topK: data.config.top_k,
+          // topP: data.config.top_p,
       })
       
       console.log('Chat response:', response)

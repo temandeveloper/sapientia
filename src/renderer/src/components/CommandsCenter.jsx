@@ -54,8 +54,8 @@ export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoad
                                         <div className="p-2 rounded-full bg-sky-500">
                                             <Bot className="w-6 h-6 text-white animate-pulse"/>
                                         </div>
-                                        <div className="p-4 rounded-xl bg-[#272d36] text-slate-400">
-                                            Sapientia sedang berpikir...
+                                        <div className="p-4 animate-pulse rounded-xl bg-[#272d36] text-slate-400">
+                                            Sapientia is still thinking...
                                         </div>
                                     </motion.div>
                                 )}

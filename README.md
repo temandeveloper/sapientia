@@ -33,6 +33,10 @@ $ npm install
 $ npx puppeteer browsers install
 ```
 
+### To use CUDA NVIDIA Download, Install and Restart PC :
+https://developer.nvidia.com/cuda-downloads
+
+
 ### To use the latest llama.cpp release available Run :
 
 ```bash

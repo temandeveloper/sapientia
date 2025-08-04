@@ -11,6 +11,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('underWorld', {
         initChat: async (data) => ipcRenderer.invoke('init-chat',data),
         sendChat: (send) => ipcRenderer.send('send-chat',send),
+        openContext: (config) => ipcRenderer.send('open-context',config),
         onResponseChat: (callback) => {
           const subscription = (_event, value) => callback(value)
           ipcRenderer.on('response-chat', subscription)

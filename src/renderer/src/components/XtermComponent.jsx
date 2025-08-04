@@ -37,7 +37,7 @@ export const XtermComponent = ({ dataStreaming }) => {
             fitAddonRef.current = fitAddon;
 
             term.writeln('\x1b[1;36mSapientia Process Terminal\x1b[0m');
-            term.writeln('Menunggu proses dari model...');
+            term.writeln('Ready to receive response...');
 
             const handleResize = () => fitAddon.fit();
             window.addEventListener('resize', handleResize);

@@ -74,8 +74,15 @@ export default function App() {
         setMessages(prev => [...prev, userMessage]);
         setIsLoading(true);
 
+        let modelConfig = await getDataTable("tbSettings",[{
+            settingName: {
+                in : ["model-configuration"]
+            }
+        }])
+
         window.underWorld.sendChat({
             text    : prompt,
+            config  : modelConfig[0].value,
             id      : messagesId,
         });
     };

@@ -202,7 +202,13 @@ class ChatManager {
 
   static async initializeAiEngine(data) {
     try {
-      const llmEngine = await getLlama("lastBuild")
+      const llmEngine = await getLlama({
+          gpu: {
+              type: "auto",
+              exclude: ["vulkan"] //kecuali vulkan
+          }
+      })
+      
       console.log("Initialize AI Chat path:", data.path)
       console.log('GPU type:', llmEngine.gpu)
       
@@ -295,6 +301,11 @@ class ChatManager {
 
   static async sendChat(event, data) {
     try {
+      console.log("send chat",{
+          temperature: data.config.temperature,
+          topK: data.config.top_k,
+          topP: data.config.top_p,
+      });
       const response = await appState.sessionChat.prompt(data.text, {
         grammar: appState.grammar,
         onTextChunk(chunk) {
@@ -303,7 +314,10 @@ class ChatManager {
             id: data.id,
             status: 'render'
           })
-        }
+        },
+          temperature: data.config.temperature,
+          topK: data.config.top_k,
+          topP: data.config.top_p,
       })
       
       console.log('Chat response:', response)
@@ -352,6 +366,11 @@ class IPCHandlers {
     // Send chat handler
     ipcMain.on('send-chat', async (event, data) => {
       await ChatManager.sendChat(event, data)
+    })
+
+    // Open Context
+    ipcMain.on('open-context', async (event, data) => {
+      await ChatManager.openContextModel(data.config)
     })
 
     // Notification handler

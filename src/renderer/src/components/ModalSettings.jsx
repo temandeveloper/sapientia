@@ -69,6 +69,13 @@ export default function ModalSettings({ setShowModalSetting }) {
             datetime    : Date.now(),
         },{settingName : "model-configuration"})
 
+        window.underWorld.openContext({
+            config  : {
+                system_prompt: systemPrompt,
+                output_schema: outputSchema
+            },
+        });
+
         setShowModalSetting(false);
     };
 
@@ -99,10 +106,10 @@ export default function ModalSettings({ setShowModalSetting }) {
                                 <label for="item-weight" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Top-K</label>
                                 <input type="number" onChange={e => setTopk(Number(e.target.value))} name="item-weight" value={topk} id="item-weight" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Input Top-K sampling"/>
                             </div> 
-                            <div>
+                            {/* <div>
                                 <label for="item-weight" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Minimum Probability ({minp})</label>
                                 <input type="range" onChange={e => setMinp(Number(e.target.value))} step="0.01" min="0.00" max="1.00" value={minp} className="range text-white range-xs" />
-                            </div>
+                            </div> */}
                             <div className="sm:col-span-2">
                                 <label for="output-schema" className="block text-sm mb-2 font-medium text-gray-900 dark:text-white">Structured Output JSON Schema</label>
                                 <textarea id="output-schema" wrap="off" rows="8" value={outputSchema} onChange={(e) => setOutputSchema(e.target.value)} className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Your structured JSON schema here"></textarea>

@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, } from 'framer-motion';
 import { 
     ArrowUp, 
-    Mic,
+    AudioLines,
 } from 'lucide-react';
 import '../../assets/xterm.css';
 import '../../assets/output.css';
 
 // Chat Input Component
-export function ChatInput({ onSendMessage, isLoading }) {
+export function ChatInput({ onSendMessage, isLoading, statusSpeech, setStatusSpeech }) {
     const [isFocused, setIsFocused] = useState(false);
     const [prompt, setPrompt] = useState("");
+    const [buttonSpeech, setButtonSpeech] = useState("text-slate-300 cursor-pointer rounded-full p-2 hover:bg-green-400/80 active:bg-green-400 transition-colors duration-200 flex-shrink-0");
     const textareaRef = useRef(null);
     const formRef = useRef(null);
 
@@ -46,6 +47,16 @@ export function ChatInput({ onSendMessage, isLoading }) {
 
     const showSendButton = isFocused && prompt.trim().length > 0;
 
+    const handleBtnSpeech = (e) => {
+        if(!statusSpeech){
+            setButtonSpeech("text-gray-600 bg-green-400 shadow-lg shadow-green-400/50 cursor-pointer rounded-full p-2 hover:bg-green-400/80 active:bg-green-400 transition-colors duration-200 flex-shrink-0") 
+            setStatusSpeech(true)
+        }else{
+            setButtonSpeech("text-slate-300 cursor-pointer rounded-full p-2 hover:bg-grey-400/80 active:bg-green-400 transition-colors duration-200 flex-shrink-0") 
+            setStatusSpeech(false)
+        }
+    };
+
     return (
         <motion.div 
             layout 
@@ -55,7 +66,6 @@ export function ChatInput({ onSendMessage, isLoading }) {
             <form 
                 ref={formRef}
                 onSubmit={handleSubmit} 
-                onClick={() => setIsFocused(true)}
                 className="relative"
             >
                 <motion.div 
@@ -105,9 +115,10 @@ export function ChatInput({ onSendMessage, isLoading }) {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.5 }}
                                 transition={{ duration: 0.2 }}
-                                className="text-slate-300 rounded-full p-2 hover:bg-gray-700/50 transition-colors duration-200 flex-shrink-0"
+                                className={buttonSpeech}
+                                onClick={handleBtnSpeech}
                             >
-                                <Mic className="w-5 h-5" />
+                                <AudioLines className="w-5 h-5" />
                             </motion.button>
                         )}
                     </AnimatePresence>

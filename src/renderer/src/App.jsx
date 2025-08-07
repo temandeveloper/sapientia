@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CustomScrollbarStyles } from './layouts/CustomScrollbarStyles';
 import { Sidebar } from './layouts/Sidebar';
 import { MainContent } from './layouts/MainContent';
@@ -6,6 +6,7 @@ import ModalDownload from './components/ModalDownload';
 import ModalSettings from './components/ModalSettings';
 import LoadingOverlay from './components/LoadingOverlay';
 import { initDatabase,getDataTable,defaultModelConfig } from './lib/idbHelper';
+import { textToSpeech } from './lib/textToSpeech';
 import '../assets/output.css';
 
 // Main App Component
@@ -17,6 +18,11 @@ export default function App() {
     const [showModalSetting, setShowModalSetting] = useState(false);
     const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
     const [activeDownload, setActiveDownload] = useState(false);
+    const [phrasesQueue, setPhrasesQueue] = useState([]);
+    const phrasePointer = useRef(0);
+    const [displayedText, setDisplayedText] = useState('');
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [statusSpeech, setStatusSpeech] = useState(false);
     let singleExec = null;
 
     useEffect(() => {
@@ -89,12 +95,47 @@ export default function App() {
 
     useEffect(() => {
         const cleanListener = window.underWorld.onResponseChat((data) => {
+            setDisplayedText(displayedText+data.response);
+            const answerKey = '"answer": "';
+            let textToDisplay = '';
+            const answerKeyIndex = displayedText.indexOf(answerKey);
+            if (answerKeyIndex !== -1) {
+                const textStartIndex = answerKeyIndex + answerKey.length;
+                textToDisplay = displayedText.substring(textStartIndex);
+                if (textToDisplay.lastIndexOf('"') !== -1) {
+                    textToDisplay = textToDisplay.substring(0, textToDisplay.lastIndexOf('"'));
+                }
+            }
+
+            // 3. Ekstrak Frasa dari 'answer' yang berhasil diekstrak
+            if (textToDisplay.length > phrasePointer.current) {
+                let lastProcessedIndex = phrasePointer.current;
+                const newPhrasesFound = [];
+                
+                while (true) {
+                    const unprocessedChunk = textToDisplay.substring(lastProcessedIndex);
+                    const matchIndex = unprocessedChunk.search(/[.,!?]/);
+                    if (matchIndex === -1) break;
+                    const phraseEndIndex = lastProcessedIndex + matchIndex + 1;
+                    const newPhrase = textToDisplay.substring(lastProcessedIndex, phraseEndIndex).trim();
+                    if (newPhrase) newPhrasesFound.push(newPhrase.replace(/[.,]/g, ""));
+                    lastProcessedIndex = phraseEndIndex;
+                }
+
+                if (newPhrasesFound.length > 0) {
+                    setPhrasesQueue(prev => [...prev, ...newPhrasesFound]);
+                    phrasePointer.current = lastProcessedIndex;
+                }
+            }
+
             if(data.status == "render"){
                 setMessagesStream({ id: data.id, response: data.response });
             }else if (data.status == "end") {
                 try {
+                    setDisplayedText("");
+                    phrasePointer.current = 0;
+
                     let jsonResponse = JSON.parse(data.response);
-                    
                     if(jsonResponse?.answer){
                         const dataMessages = {
                             id: data.id,
@@ -115,10 +156,49 @@ export default function App() {
         return () => {
             cleanListener(); // Clean up the listener on unmount karena variable cleanListener return fungsi removelistener dari preload
         };
-    }, [])
+    }, [displayedText])
+
+    // Effect untuk memproses antrean TTS
+    useEffect(() => {
+        const processQueue = async () => {
+            if (isSpeaking || phrasesQueue.length === 0 || !statusSpeech){
+                setPhrasesQueue([])
+                setDisplayedText("");
+                phrasePointer.current = 0;
+            }else{
+                setIsSpeaking(true);
+                const phraseToSpeak = phrasesQueue[0];
+                try {
+                    await speakAndWait({ text: phraseToSpeak });
+                } catch (error) {
+                    console.warn("Speech error:", error);
+                } finally {
+                    setPhrasesQueue(currentQueue => currentQueue.slice(1));
+                    setIsSpeaking(false);
+                }
+            }
+        };
+        processQueue();
+    }, [phrasesQueue, isSpeaking, statusSpeech]);
 
     const handleCloseModalSetting = () => {
         setShowModalSetting(1)
+    }
+
+    function speakAndWait(options) {
+        return new Promise((resolve, reject) => {
+            textToSpeech({
+                ...options,
+                onEnd: () => {
+                    // Promise akan 'selesai' (resolve) ketika ucapan berakhir.
+                    resolve();
+                },
+                onError: (event) => {
+                    // Promise akan 'gagal' (reject) jika terjadi error.
+                    reject(event.error);
+                }
+            });
+        });
     }
 
     return (
@@ -140,6 +220,8 @@ export default function App() {
                 messagesStream={messagesStream}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
+                setStatusSpeech={setStatusSpeech}
+                statusSpeech={statusSpeech}
             />
         </div>
     );

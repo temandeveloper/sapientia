@@ -11,7 +11,14 @@ import { XtermComponent } from './XtermComponent';
 import { ChatMessage } from './ChatMessage';
 
 // Main view for the chat interface
-export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoading }) {
+export function CommandsCenter({ 
+    messages,
+    messagesStream,
+    onSendMessage,
+    isLoading,
+    setStatusSpeech,
+    statusSpeech
+}){
     const chatContainerRef = useRef(null);
     const isChatStarted = messages.length > 0;
 
@@ -77,7 +84,7 @@ export function CommandsCenter({ messages, messagesStream, onSendMessage, isLoad
                 </AnimatePresence>
             </div>
             <div className="flex-shrink-0 p-6 pt-2">
-                <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
+                <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} statusSpeech={statusSpeech} setStatusSpeech={setStatusSpeech}/>
             </div>
         </div>
     );

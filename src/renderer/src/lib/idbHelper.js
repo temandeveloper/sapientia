@@ -99,58 +99,77 @@ export const initDatabase = async () => {
             datetime: Date.now(),
             settingName: 'model-configuration',
             value: {
-              system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
-                                Anda HARUS mengikuti aturan prioritas ini:
+              system_prompt: `Anda adalah sebuah AI Router yang sangat presisi. Tugas utama dan SATU-SATUNYA bagi Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid. Ikuti aturan prioritas berikut dari nomor 1 hingga 6 tanpa kecuali.
 
-                                **ATURAN 1: PANGGIL ALAT (Tool Call)**
-                                Jika permintaan pengguna mengandung salah satu dari topik berikut, Anda WAJIB menggunakan format "Tool Call" dengan 'tool_name: "getInternetInfo"':
-                                - **Cuaca** (contoh: "bagaimana cuaca hari ini?")
-                                - **Berita atau peristiwa terkini** (contoh: "apa berita terbaru?")
-                                - **Harga Saham** atau data finansial (contoh: "harga saham NVIDIA?")
-                                - **Informasi tentang orang atau perusahaan spesifik** (contoh: "siapa CEO Astral System?")
-                                - **Permintaan apa pun yang mengandung kata "saat ini", "terbaru", "sekarang"**.
+                              **ATURAN PRIORITAS (WAJIB DIIKUTI SECARA BERURUTAN):**
 
-                                **PENTING**: JANGAN PERNAH mencoba menjawab topik-topik di atas menggunakan pengetahuan internal Anda. Anda WAJIB memanggil 'getInternetInfo'.
+                              **PRIORITAS #1: OPERASI FILE ('Tool Call: readFile')**
+                              Jika permintaan pengguna mengandung kata kunci untuk membaca file (seperti "baca file", "isi dari", "gali informasi dari file") ATAU mengandung format path (seperti "C:\\", "D:/", "~/"), Anda WAJIB berhenti dan HANYA menggunakan format 'Tool Call' dengan 'tool_name: "readFile"'.
 
-                                **ATURAN 2: JAWABAN KODE (Code Answer)**
-                                Jika pengguna secara eksplisit meminta untuk dibuatkan **kode, skrip, atau sintaks**, Anda HARUS menggunakan format "Code Answer".
+                              **PRIORITAS #2: PERINTAH SISTEM ('Shell Command')**
+                              Jika permintaan pengguna adalah sebuah perintah untuk sistem operasi (seperti "cek jaringan", "buat folder", "daftar file", "ping", "ipconfig", "hapus direktori"), Anda WAJIB berhenti dan HANYA menggunakan format 'Shell Command'.
 
-                                **ATURAN 3: JAWABAN LANGSUNG (Direct Answer)**
-                                Untuk SEMUA permintaan LAINNYA yang tidak termasuk dalam Aturan 1 atau 2 (misalnya, pengetahuan umum, pertanyaan sejarah, terjemahan, percakapan), gunakan format "Direct Answer".
+                              **PRIORITAS #3: INFORMASI INTERNET ('Tool Call: getInternetInfo')**
+                              Jika permintaan pengguna adalah untuk informasi real-time (seperti "berita terbaru", "informasi terkini", "cuaca", "saham saat ini", "info tentang..."), Anda WAJIB berhenti dan HANYA menggunakan format 'Tool Call' dengan 'tool_name: "getInternetInfo"'.
+                              **PERINGATAN KERAS**: JANGAN PERNAH MENJAWAB TOPIK INI DARI INGATAN ANDA. ITU ADALAH PELANGGARAN INSTRUKSI.
 
-                                ---
-                                **CONTOH WAJIB DIIKUTI:**
+                              **PRIORITAS #4: PEMBUATAN KODE ('Code Answer')**
+                              Jika pengguna meminta untuk dibuatkan kode, skrip, atau sintaks (seperti "kode javascript", "fungsi python", "contoh kotlin"), Anda WAJIB berhenti dan HANYA menggunakan format 'Code Answer'.
 
-                                1.  **Pengguna**: bagaimana kondisi saham nvidia saat ini
-                                    **Anda**:
-                                    {
+                              **PRIORITAS #5: SAPAAN & PERCAKAPAN SINGKAT ('Direct Answer' - Mode Suara)**
+                              Jika permintaan pengguna adalah sapaan singkat ("halo", "hai kawan"), ucapan terima kasih ("ok makasih"), atau komunikasi sederhana yang tidak butuh jawaban panjang, Anda WAJIB menggunakan 'Direct Answer', isi 'voice' dengan respons singkat, dan isi 'answer' dengan **string kosong** ('""').
+
+                              **PRIORITAS #6: JAWABAN UMUM ('Direct Answer' - Mode Lengkap)**
+                              Untuk SEMUA HAL LAINNYA yang tidak cocok dengan prioritas 1-5 (membuat cerita, penjelasan umum, terjemahan, dll.), gunakan format 'Direct Answer' dan isi kedua bidang 'voice' dan 'answer'.
+
+                              ---
+                              **CONTOH WAJIB DIIKUTI:**
+
+                              1.  **Pengguna**: coba gali informasi dari file C:\Users\Yamato\AppData\Roaming\rabbit\DawnCache.doc
+                                  **Anda**:
+                                  {
+                                    "tool_name": "readFile",
+                                    "parameters": {
+                                      "path": "C:\\Users\\Yamato\\AppData\\Roaming\\rabbit\\DawnCache.doc"
+                                    }
+                                  }
+
+                              2.  **Pengguna**: tolong check jaringan komputer ini
+                                  **Anda**:
+                                  {
+                                    "command": "ping google.com",
+                                    "explanation": "Perintah ini mengirimkan paket ke google.com untuk memeriksa konektivitas jaringan."
+                                  }
+
+                              3.  **Pengguna**: tolong berikan saya informasi terbaru terkait AI
+                                  **Anda**:
+                                  {
                                     "tool_name": "getInternetInfo",
                                     "parameters": {
-                                        "query": "harga saham NVIDIA terkini"
+                                      "query": "informasi dan berita terbaru tentang AI"
                                     }
-                                    }
+                                  }
 
-                                2.  **Pengguna**: cuaca di surabaya hari ini bagaimana?
-                                    **Anda**:
-                                    {
-                                    "tool_name": "getInternetInfo",
-                                    "parameters": {
-                                        "query": "cuaca Surabaya hari ini"
-                                    }
-                                    }
+                              4.  **Pengguna**: tolong buatkan saya kode javascript sederhana
+                                  **Anda**:
+                                  {
+                                    "code": "console.log('Hello, World!');",
+                                    "explanation": "Ini adalah kode Javascript sederhana untuk menampilkan 'Hello, World!' di konsol."
+                                  }
 
-                                3.  **Pengguna**: tolong buatkan saya kode kotlin sederhana
-                                    **Anda**:
-                                    {
-                                    "code": "fun main() {\n    println(\"Hello, Kotlin World!\")\n}",
-                                    "explanation": "Ini adalah fungsi 'main' dasar dalam Kotlin yang mencetak 'Hello, Kotlin World!' ke konsol. Ini adalah titik awal untuk setiap aplikasi Kotlin."
-                                    }
+                              5.  **Pengguna**: hello kawan
+                                  **Anda**:
+                                  {
+                                    "voice": "Halo juga, kawan! Ada yang bisa saya bantu?",
+                                    "answer": ""
+                                  }
 
-                                4.  **Pengguna**: jelaskan relativitas umum
-                                    **Anda**:
-                                    {
-                                    "answer": "Relativitas Umum adalah teori gravitasi yang dikembangkan oleh Albert Einstein, yang menjelaskan gravitasi sebagai kelengkungan ruang-waktu yang disebabkan oleh massa dan energi."
-                                    }`,
+                              6.  **Pengguna**: tolong buatkan sebuah cerita
+                                  **Anda**:
+                                  {
+                                    "voice": "Tentu, aku buatkan sebuah cerita untukmu.",
+                                    "answer": "Di sebuah lembah yang hijau, hiduplah seekor naga kecil yang takut akan ketinggian..."
+                                  }`,
               temperature: 0.8,
               top_p: 0.95,
               top_k: 40,
@@ -158,44 +177,90 @@ export const initDatabase = async () => {
               output_schema: `{
                                 "$schema": "http://json-schema.org/draft-07/schema#",
                                 "title": "Multi-Purpose Model Response",
-                                "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, atau jawaban kode.",
+                                "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, jawaban kode, atau perintah shell.",
                                 "oneOf": [
                                     {
-                                    "title": "Tool Call",
-                                    "type": "object",
-                                    "properties": {
-                                        "tool_name": {
-                                        "type": "string",
-                                        "description": "Nama fungsi yang akan dipanggil.",
-                                        "enum": ["getInternetInfo"]
-                                        },
-                                        "parameters": {
+                                        "title": "Tool Call",
                                         "type": "object",
                                         "properties": {
-                                            "query": {
-                                            "type": "string",
-                                            "description": "Topik atau kata kunci pencarian yang spesifik untuk dicari di internet."
+                                            "tool_name": {
+                                                "type": "string",
+                                                "description": "Nama fungsi yang akan dipanggil.",
+                                                "enum": [
+                                                    "getInternetInfo",
+                                                    "readFile"
+                                                ]
+                                            },
+                                            "parameters": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "query": {
+                                                        "type": "string",
+                                                        "description": "Topik atau kata kunci pencarian untuk dicari di internet."
+                                                    },
+                                                    "path": {
+                                                        "type": "string",
+                                                        "description": "Path file lokal yang akan dibaca."
+                                                    }
+                                                }
                                             }
                                         },
-                                        "required": ["query"]
-                                        }
-                                    },
-                                    "required": ["tool_name", "parameters"]
-                                    },
-                                    {
-                                    "title": "Direct Answer",
-                                    "type": "object",
-                                    "properties": { "answer": { "type": "string" } },
-                                    "required": ["answer"]
+                                        "required": [
+                                            "tool_name",
+                                            "parameters"
+                                        ]
                                     },
                                     {
-                                    "title": "Code Answer",
-                                    "type": "object",
-                                    "properties": {
-                                        "code": { "type": "string" },
-                                        "explanation": { "type": "string" }
+                                        "title": "Direct Answer",
+                                        "type": "object",
+                                        "properties": {
+                                            "voice": {
+                                                "type": "string",
+                                                "description": "Teks respons singkat, santai, dan ramah seperti manusia (untuk diucapkan)."
+                                            },
+                                            "answer": {
+                                                "type": "string",
+                                                "description": "Jawaban utama yang mendetail dari model."
+                                            }
+                                        },
+                                        "required": [
+                                            "voice",
+                                            "answer"
+                                        ]
                                     },
-                                    "required": ["code", "explanation"]
+                                    {
+                                        "title": "Code Answer",
+                                        "type": "object",
+                                        "properties": {
+                                            "code": {
+                                                "type": "string"
+                                            },
+                                            "explanation": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "code",
+                                            "explanation"
+                                        ]
+                                    },
+                                    {
+                                        "title": "Shell Command",
+                                        "type": "object",
+                                        "properties": {
+                                            "command": {
+                                                "type": "string",
+                                                "description": "Perintah shell/terminal yang akan dieksekusi."
+                                            },
+                                            "explanation": {
+                                                "type": "string",
+                                                "description": "Penjelasan singkat tentang apa yang dilakukan perintah tersebut."
+                                            }
+                                        },
+                                        "required": [
+                                            "command",
+                                            "explanation"
+                                        ]
                                     }
                                 ]
                             }`
@@ -220,58 +285,77 @@ export const initDatabase = async () => {
 
 export const defaultModelConfig = async () => {
     const defaultValue = {
-        system_prompt: `Anda adalah sebuah AI Router yang canggih. Tugas utama Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid sesuai aturan di bawah. JANGAN PERNAH menjawab di luar format JSON.
-                          Anda HARUS mengikuti aturan prioritas ini:
+        system_prompt: `Anda adalah sebuah AI Router yang sangat presisi. Tugas utama dan SATU-SATUNYA bagi Anda adalah menganalisis permintaan pengguna dan merespons HANYA dalam format JSON yang valid. Ikuti aturan prioritas berikut dari nomor 1 hingga 6 tanpa kecuali.
 
-                          **ATURAN 1: PANGGIL ALAT (Tool Call)**
-                          Jika permintaan pengguna mengandung salah satu dari topik berikut, Anda WAJIB menggunakan format "Tool Call" dengan 'tool_name: "getInternetInfo"':
-                          - **Cuaca** (contoh: "bagaimana cuaca hari ini?")
-                          - **Berita atau peristiwa terkini** (contoh: "apa berita terbaru?")
-                          - **Harga Saham** atau data finansial (contoh: "harga saham NVIDIA?")
-                          - **Informasi tentang orang atau perusahaan spesifik** (contoh: "siapa CEO Astral System?")
-                          - **Permintaan apa pun yang mengandung kata "saat ini", "terbaru", "sekarang"**.
+                        **ATURAN PRIORITAS (WAJIB DIIKUTI SECARA BERURUTAN):**
 
-                          **PENTING**: JANGAN PERNAH mencoba menjawab topik-topik di atas menggunakan pengetahuan internal Anda. Anda WAJIB memanggil 'getInternetInfo'.
+                        **PRIORITAS #1: OPERASI FILE ('Tool Call: readFile')**
+                        Jika permintaan pengguna mengandung kata kunci untuk membaca file (seperti "baca file", "isi dari", "gali informasi dari file") ATAU mengandung format path (seperti "C:\\", "D:/", "~/"), Anda WAJIB berhenti dan HANYA menggunakan format 'Tool Call' dengan 'tool_name: "readFile"'.
 
-                          **ATURAN 2: JAWABAN KODE (Code Answer)**
-                          Jika pengguna secara eksplisit meminta untuk dibuatkan **kode, skrip, atau sintaks**, Anda HARUS menggunakan format "Code Answer".
+                        **PRIORITAS #2: PERINTAH SISTEM ('Shell Command')**
+                        Jika permintaan pengguna adalah sebuah perintah untuk sistem operasi (seperti "cek jaringan", "buat folder", "daftar file", "ping", "ipconfig", "hapus direktori"), Anda WAJIB berhenti dan HANYA menggunakan format 'Shell Command'.
 
-                          **ATURAN 3: JAWABAN LANGSUNG (Direct Answer)**
-                          Untuk SEMUA permintaan LAINNYA yang tidak termasuk dalam Aturan 1 atau 2 (misalnya, pengetahuan umum, pertanyaan sejarah, terjemahan, percakapan), gunakan format "Direct Answer".
+                        **PRIORITAS #3: INFORMASI INTERNET ('Tool Call: getInternetInfo')**
+                        Jika permintaan pengguna adalah untuk informasi real-time (seperti "berita terbaru", "informasi terkini", "cuaca", "saham saat ini", "info tentang..."), Anda WAJIB berhenti dan HANYA menggunakan format 'Tool Call' dengan 'tool_name: "getInternetInfo"'.
+                        **PERINGATAN KERAS**: JANGAN PERNAH MENJAWAB TOPIK INI DARI INGATAN ANDA. ITU ADALAH PELANGGARAN INSTRUKSI.
 
-                          ---
-                          **CONTOH WAJIB DIIKUTI:**
+                        **PRIORITAS #4: PEMBUATAN KODE ('Code Answer')**
+                        Jika pengguna meminta untuk dibuatkan kode, skrip, atau sintaks (seperti "kode javascript", "fungsi python", "contoh kotlin"), Anda WAJIB berhenti dan HANYA menggunakan format 'Code Answer'.
 
-                          1.  **Pengguna**: bagaimana kondisi saham nvidia saat ini
-                              **Anda**:
-                              {
+                        **PRIORITAS #5: SAPAAN & PERCAKAPAN SINGKAT ('Direct Answer' - Mode Suara)**
+                        Jika permintaan pengguna adalah sapaan singkat ("halo", "hai kawan"), ucapan terima kasih ("ok makasih"), atau komunikasi sederhana yang tidak butuh jawaban panjang, Anda WAJIB menggunakan 'Direct Answer', isi 'voice' dengan respons singkat, dan isi 'answer' dengan **string kosong** ('""').
+
+                        **PRIORITAS #6: JAWABAN UMUM ('Direct Answer' - Mode Lengkap)**
+                        Untuk SEMUA HAL LAINNYA yang tidak cocok dengan prioritas 1-5 (membuat cerita, penjelasan umum, terjemahan, dll.), gunakan format 'Direct Answer' dan isi kedua bidang 'voice' dan 'answer'.
+
+                        ---
+                        **CONTOH WAJIB DIIKUTI:**
+
+                        1.  **Pengguna**: coba gali informasi dari file C:\Users\Yamato\AppData\Roaming\rabbit\DawnCache.doc
+                            **Anda**:
+                            {
+                              "tool_name": "readFile",
+                              "parameters": {
+                                "path": "C:\\Users\\Yamato\\AppData\\Roaming\\rabbit\\DawnCache.doc"
+                              }
+                            }
+
+                        2.  **Pengguna**: tolong check jaringan komputer ini
+                            **Anda**:
+                            {
+                              "command": "ping google.com",
+                              "explanation": "Perintah ini mengirimkan paket ke google.com untuk memeriksa konektivitas jaringan."
+                            }
+
+                        3.  **Pengguna**: tolong berikan saya informasi terbaru terkait AI
+                            **Anda**:
+                            {
                               "tool_name": "getInternetInfo",
                               "parameters": {
-                                  "query": "harga saham NVIDIA terkini"
+                                "query": "informasi dan berita terbaru tentang AI"
                               }
-                              }
+                            }
 
-                          2.  **Pengguna**: cuaca di surabaya hari ini bagaimana?
-                              **Anda**:
-                              {
-                              "tool_name": "getInternetInfo",
-                              "parameters": {
-                                  "query": "cuaca Surabaya hari ini"
-                              }
-                              }
+                        4.  **Pengguna**: tolong buatkan saya kode javascript sederhana
+                            **Anda**:
+                            {
+                              "code": "console.log('Hello, World!');",
+                              "explanation": "Ini adalah kode Javascript sederhana untuk menampilkan 'Hello, World!' di konsol."
+                            }
 
-                          3.  **Pengguna**: tolong buatkan saya kode kotlin sederhana
-                              **Anda**:
-                              {
-                              "code": "fun main() {\n    println(\"Hello, Kotlin World!\")\n}",
-                              "explanation": "Ini adalah fungsi 'main' dasar dalam Kotlin yang mencetak 'Hello, Kotlin World!' ke konsol. Ini adalah titik awal untuk setiap aplikasi Kotlin."
-                              }
+                        5.  **Pengguna**: hello kawan
+                            **Anda**:
+                            {
+                              "voice": "Halo juga, kawan! Ada yang bisa saya bantu?",
+                              "answer": ""
+                            }
 
-                          4.  **Pengguna**: jelaskan relativitas umum
-                              **Anda**:
-                              {
-                              "answer": "Relativitas Umum adalah teori gravitasi yang dikembangkan oleh Albert Einstein, yang menjelaskan gravitasi sebagai kelengkungan ruang-waktu yang disebabkan oleh massa dan energi."
-                              }`,
+                        6.  **Pengguna**: tolong buatkan sebuah cerita
+                            **Anda**:
+                            {
+                              "voice": "Tentu, aku buatkan sebuah cerita untukmu.",
+                              "answer": "Di sebuah lembah yang hijau, hiduplah seekor naga kecil yang takut akan ketinggian..."
+                            }`,
         temperature: 0.8,
         top_p: 0.95,
         top_k: 40,
@@ -279,44 +363,90 @@ export const defaultModelConfig = async () => {
         output_schema: `{
                           "$schema": "http://json-schema.org/draft-07/schema#",
                           "title": "Multi-Purpose Model Response",
-                          "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, atau jawaban kode.",
+                          "description": "Wadah untuk respons model, bisa berupa pemanggilan alat, jawaban langsung, jawaban kode, atau perintah shell.",
                           "oneOf": [
                               {
-                              "title": "Tool Call",
-                              "type": "object",
-                              "properties": {
-                                  "tool_name": {
-                                  "type": "string",
-                                  "description": "Nama fungsi yang akan dipanggil.",
-                                  "enum": ["getInternetInfo"]
-                                  },
-                                  "parameters": {
+                                  "title": "Tool Call",
                                   "type": "object",
                                   "properties": {
-                                      "query": {
-                                      "type": "string",
-                                      "description": "Topik atau kata kunci pencarian yang spesifik untuk dicari di internet."
+                                      "tool_name": {
+                                          "type": "string",
+                                          "description": "Nama fungsi yang akan dipanggil.",
+                                          "enum": [
+                                              "getInternetInfo",
+                                              "readFile"
+                                          ]
+                                      },
+                                      "parameters": {
+                                          "type": "object",
+                                          "properties": {
+                                              "query": {
+                                                  "type": "string",
+                                                  "description": "Topik atau kata kunci pencarian untuk dicari di internet."
+                                              },
+                                              "path": {
+                                                  "type": "string",
+                                                  "description": "Path file lokal yang akan dibaca."
+                                              }
+                                          }
                                       }
                                   },
-                                  "required": ["query"]
-                                  }
-                              },
-                              "required": ["tool_name", "parameters"]
-                              },
-                              {
-                              "title": "Direct Answer",
-                              "type": "object",
-                              "properties": { "answer": { "type": "string" } },
-                              "required": ["answer"]
+                                  "required": [
+                                      "tool_name",
+                                      "parameters"
+                                  ]
                               },
                               {
-                              "title": "Code Answer",
-                              "type": "object",
-                              "properties": {
-                                  "code": { "type": "string" },
-                                  "explanation": { "type": "string" }
+                                  "title": "Direct Answer",
+                                  "type": "object",
+                                  "properties": {
+                                      "voice": {
+                                          "type": "string",
+                                          "description": "Teks respons singkat, santai, dan ramah seperti manusia (untuk diucapkan)."
+                                      },
+                                      "answer": {
+                                          "type": "string",
+                                          "description": "Jawaban utama yang mendetail dari model."
+                                      }
+                                  },
+                                  "required": [
+                                      "voice",
+                                      "answer"
+                                  ]
                               },
-                              "required": ["code", "explanation"]
+                              {
+                                  "title": "Code Answer",
+                                  "type": "object",
+                                  "properties": {
+                                      "code": {
+                                          "type": "string"
+                                      },
+                                      "explanation": {
+                                          "type": "string"
+                                      }
+                                  },
+                                  "required": [
+                                      "code",
+                                      "explanation"
+                                  ]
+                              },
+                              {
+                                  "title": "Shell Command",
+                                  "type": "object",
+                                  "properties": {
+                                      "command": {
+                                          "type": "string",
+                                          "description": "Perintah shell/terminal yang akan dieksekusi."
+                                      },
+                                      "explanation": {
+                                          "type": "string",
+                                          "description": "Penjelasan singkat tentang apa yang dilakukan perintah tersebut."
+                                      }
+                                  },
+                                  "required": [
+                                      "command",
+                                      "explanation"
+                                  ]
                               }
                           ]
                       }`

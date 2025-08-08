@@ -23,6 +23,7 @@ export default function App() {
     const [displayedText, setDisplayedText] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [statusSpeech, setStatusSpeech] = useState(false);
+    const [eos, setEos] = useState(false);
     let singleExec = null;
 
     useEffect(() => {
@@ -96,43 +97,51 @@ export default function App() {
     useEffect(() => {
         const cleanListener = window.underWorld.onResponseChat((data) => {
             setDisplayedText(displayedText+data.response);
-            const answerKey = '"answer": "';
+            const answerKey = '"voice": "';
             let textToDisplay = '';
             const answerKeyIndex = displayedText.indexOf(answerKey);
-            if (answerKeyIndex !== -1) {
-                const textStartIndex = answerKeyIndex + answerKey.length;
-                textToDisplay = displayedText.substring(textStartIndex);
-                if (textToDisplay.lastIndexOf('"') !== -1) {
-                    textToDisplay = textToDisplay.substring(0, textToDisplay.lastIndexOf('"'));
-                }
-            }
 
-            // 3. Ekstrak Frasa dari 'answer' yang berhasil diekstrak
-            if (textToDisplay.length > phrasePointer.current) {
-                let lastProcessedIndex = phrasePointer.current;
-                const newPhrasesFound = [];
-                
-                while (true) {
-                    const unprocessedChunk = textToDisplay.substring(lastProcessedIndex);
-                    const matchIndex = unprocessedChunk.search(/[.,!?]/);
-                    if (matchIndex === -1) break;
-                    const phraseEndIndex = lastProcessedIndex + matchIndex + 1;
-                    const newPhrase = textToDisplay.substring(lastProcessedIndex, phraseEndIndex).trim();
-                    if (newPhrase) newPhrasesFound.push(newPhrase.replace(/[.,]/g, ""));
-                    lastProcessedIndex = phraseEndIndex;
+            if(!eos){ //detect end of sentence token
+                if (answerKeyIndex !== -1) {
+                    const textStartIndex = answerKeyIndex + answerKey.length;
+                    textToDisplay = displayedText.substring(textStartIndex);
+                    if (textToDisplay.lastIndexOf('"') !== -1) {
+                        textToDisplay = textToDisplay.substring(0, textToDisplay.lastIndexOf('"'));
+                    }
                 }
 
-                if (newPhrasesFound.length > 0 && statusSpeech) {
-                    setPhrasesQueue(prev => [...prev, ...newPhrasesFound]);
-                    phrasePointer.current = lastProcessedIndex;
+                // 3. Ekstrak Frasa dari 'voice' yang berhasil diekstrak
+                if (textToDisplay.length > phrasePointer.current) {
+                    let lastProcessedIndex = phrasePointer.current;
+                    const newPhrasesFound = [];
+                    
+                    while (displayedText.length > 0) {
+                        const endOfSentence = displayedText.indexOf('",');
+                        if(endOfSentence !== -1) setEos(true);
+                        const unprocessedChunk = textToDisplay.substring(lastProcessedIndex);
+                        const matchIndex = unprocessedChunk.search(/[.,!?]/);
+                        if (matchIndex === -1) break;
+                        const phraseEndIndex = lastProcessedIndex + matchIndex + 1;
+                        const newPhrase = textToDisplay.substring(lastProcessedIndex, phraseEndIndex).trim();
+                        if (newPhrase) newPhrasesFound.push(newPhrase.replace(/[.,]/g, ""));
+                        lastProcessedIndex = phraseEndIndex;
+                    }
+                        
+
+                    if (newPhrasesFound.length > 0 && statusSpeech) {
+                        setPhrasesQueue(prev => [...prev, ...newPhrasesFound]);
+                        phrasePointer.current = lastProcessedIndex;
+                    }
                 }
             }
+            
 
             if(data.status == "render"){
                 setMessagesStream({ id: data.id, response: data.response });
             }else if (data.status == "end") {
                 try {
                     setDisplayedText("");
+                    setEos(false)
                     phrasePointer.current = 0;
 
                     let jsonResponse = JSON.parse(data.response);
@@ -156,13 +165,13 @@ export default function App() {
         return () => {
             cleanListener(); // Clean up the listener on unmount karena variable cleanListener return fungsi removelistener dari preload
         };
-    }, [displayedText])
+    }, [displayedText,eos])
 
     // Effect untuk memproses antrean TTS
     useEffect(() => {
         const processQueue = async () => {
             if (isSpeaking || phrasesQueue.length === 0 || !statusSpeech) return;
-                
+            console.log("phrasesQueue",phrasesQueue);
             setIsSpeaking(true);
             const phraseToSpeak = phrasesQueue[0];
             try {
@@ -182,6 +191,7 @@ export default function App() {
         if(!statusSpeech){
             setPhrasesQueue([])
             setDisplayedText("");
+            setEos(false)
             phrasePointer.current = 0;
         }
     },[statusSpeech])

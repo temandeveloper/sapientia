@@ -122,7 +122,7 @@ export default function App() {
                     lastProcessedIndex = phraseEndIndex;
                 }
 
-                if (newPhrasesFound.length > 0) {
+                if (newPhrasesFound.length > 0 && statusSpeech) {
                     setPhrasesQueue(prev => [...prev, ...newPhrasesFound]);
                     phrasePointer.current = lastProcessedIndex;
                 }
@@ -161,25 +161,30 @@ export default function App() {
     // Effect untuk memproses antrean TTS
     useEffect(() => {
         const processQueue = async () => {
-            if (isSpeaking || phrasesQueue.length === 0 || !statusSpeech){
-                setPhrasesQueue([])
-                setDisplayedText("");
-                phrasePointer.current = 0;
-            }else{
-                setIsSpeaking(true);
-                const phraseToSpeak = phrasesQueue[0];
-                try {
-                    await speakAndWait({ text: phraseToSpeak });
-                } catch (error) {
-                    console.warn("Speech error:", error);
-                } finally {
-                    setPhrasesQueue(currentQueue => currentQueue.slice(1));
-                    setIsSpeaking(false);
-                }
+            if (isSpeaking || phrasesQueue.length === 0 || !statusSpeech) return;
+                
+            setIsSpeaking(true);
+            const phraseToSpeak = phrasesQueue[0];
+            try {
+                await speakAndWait({ text: phraseToSpeak });
+            } catch (error) {
+                console.warn("Speech error:", error);
+            } finally {
+                setPhrasesQueue(currentQueue => currentQueue.slice(1));
+                setIsSpeaking(false);
             }
+                
         };
         processQueue();
     }, [phrasesQueue, isSpeaking, statusSpeech]);
+
+    useEffect(()=>{
+        if(!statusSpeech){
+            setPhrasesQueue([])
+            setDisplayedText("");
+            phrasePointer.current = 0;
+        }
+    },[statusSpeech])
 
     const handleCloseModalSetting = () => {
         setShowModalSetting(1)

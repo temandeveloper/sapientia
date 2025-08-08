@@ -11,7 +11,7 @@ import '../../assets/output.css';
 export function ChatInput({ onSendMessage, isLoading, statusSpeech, setStatusSpeech }) {
     const [isFocused, setIsFocused] = useState(false);
     const [prompt, setPrompt] = useState("");
-    const [buttonSpeech, setButtonSpeech] = useState("text-slate-300 cursor-pointer rounded-full p-2 hover:bg-green-400/80 active:bg-green-400 transition-colors duration-200 flex-shrink-0");
+    const [buttonSpeech, setButtonSpeech] = useState("text-slate-300 cursor-pointer rounded-full p-2 hover:bg-grey-400/80 active:bg-green-400 transition-colors duration-200 flex-shrink-0");
     const textareaRef = useRef(null);
     const formRef = useRef(null);
 

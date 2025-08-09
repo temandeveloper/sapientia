@@ -77,7 +77,7 @@ export default function App() {
     const handleSendMessage = async (prompt) => {
         if (!prompt) return;
         let messagesId = Date.now()
-        const userMessage = { id: messagesId, role: "user", parts: [{ text: prompt }] };
+        const userMessage = { id: messagesId, role: "user", type: "user", parts: [{ text: prompt }] };
         setMessages(prev => [...prev, userMessage]);
         setIsLoading(true);
 
@@ -145,11 +145,13 @@ export default function App() {
                     phrasePointer.current = 0;
 
                     let jsonResponse = JSON.parse(data.response);
-                    if(jsonResponse?.answer){
+                    if(jsonResponse?.voice){
+                        let responseTxt = jsonResponse.answer.length > 0 ? jsonResponse.answer : jsonResponse.voice;
                         const dataMessages = {
                             id: data.id,
                             role: "model",
-                            parts: [{ text: jsonResponse.answer }]
+                            type: "direct-answer",
+                            parts: [{ text: responseTxt }]
                         };
                         setMessages(prev => [...prev, dataMessages]);
                     }

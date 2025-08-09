@@ -1541,6 +1541,12 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
+  .text-\[0\.938rem\] {
+    font-size: 0.938rem;
+  }
+  .text-\[1\.406rem\] {
+    font-size: 1.406rem;
+  }
   .font-bold {
     --tw-font-weight: var(--font-weight-bold);
     font-weight: var(--font-weight-bold);

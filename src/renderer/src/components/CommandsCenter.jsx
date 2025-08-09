@@ -47,7 +47,7 @@ export function CommandsCenter({
                         {!isChatStarted ? (
                             <div className="flex flex-col items-center justify-center text-center h-full">
                                 <h2 className="text-2xl font-semibold text-slate-100 mb-4">Sapientia The Art of Code Engineering</h2>
-                                <p className='text-[0.938rem] text-slate-100 mb-12 w-1/2'>Sapientia makes your device smarter and more private — like your own personal assistant. Engineered with RAG capabilities to access information from the internet or your local documents, it can also interact with your device via console for enhanced accessibility and seamless integration.</p>
+                                <p className='text-[0.938rem] text-slate-100 mb-12 w-1/2'>Sapientia is your private assistant. Engineered with RAG capabilities to access information from the internet or your local documents, it can also interact with your device.</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
                                     <SuggestionCard text="Craft a beautiful poem" onClick={handleSuggestionClick} />
                                     <SuggestionCard text="Check your system information" onClick={handleSuggestionClick} />

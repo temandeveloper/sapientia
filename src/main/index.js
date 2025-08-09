@@ -17,6 +17,10 @@ import {
   JinjaTemplateChatWrapper
 } from 'node-llama-cpp'
 import fs from 'fs'
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import mammoth from 'mammoth';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 // Configuration and Constants
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -339,6 +343,127 @@ class ChatManager {
   }
 }
 
+class RAG {
+  static async getDataPdf(path) {
+    console.log("path pdf", path);
+    try {
+      // 1. Baca file seperti biasa, ini akan menghasilkan Buffer
+      let dataBuffer = fs.readFileSync(path);
+
+      // 2. Konversi Buffer menjadi Uint8Array
+      const uint8Array = new Uint8Array(dataBuffer);
+
+      // 3. Gunakan uint8Array saat memanggil getDocument
+      const loadingTask = getDocument({ 
+        data: uint8Array, // <-- Gunakan variabel baru di sini
+        disableWorker: true 
+      });
+
+      const pdf = await loadingTask.promise;
+      let allText = '';
+      
+      console.log("Jumlah halaman:", pdf.numPages);
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        allText += pageText + '\n';
+      }
+
+      console.log("--- Ekstraksi PDF Berhasil ---");
+      console.log(allText.substring(0, 500) + '...');
+      
+      return allText; 
+
+    } catch (error) {
+      // Error logging sekarang akan lebih akurat jika ada masalah lain
+      console.error("Gagal memproses PDF dengan pdf.js:", error);
+    }
+  }
+
+  static async getDataDocx(path) {
+    console.log("path docx", path);
+
+    let fullText = await mammoth.extractRawText({path: path})
+    .then(function(result){
+        return result?.value;
+    })
+    .catch(function(error) {
+        console.error(error);
+    });
+
+    return fullText;
+  }
+
+  static async getDataWebPage(url) {
+    // 1. Daftar 5 User-Agent yang berbeda untuk browser dan OS modern.
+    const userAgents = [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:126.0) Gecko/20100101 Firefox/126.0',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edg/125.0.2535.67 Safari/537.36'
+    ];
+
+    // 2. Pilih satu User-Agent secara acak dari daftar di atas.
+    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+    console.log(`Menggunakan User-Agent: ${randomUserAgent}`);
+
+    // --- AKHIR DARI PERUBAHAN ---
+    try {
+      console.log(`Mengambil konten dari: ${url}`);
+      const response = await axios.get(url, {
+          headers: {
+              // 3. Gunakan User-Agent yang dipilih secara acak di sini.
+              'User-Agent': randomUserAgent
+          }
+      });
+      const html = response.data;
+
+      const $ = cheerio.load(html);
+      const title = $('h1').first().text().trim();
+
+      let content = '';
+      $('p').each((index, element) => {
+        content += $(element).text().trim() + '\n\n';
+      });
+      
+      if (!content) {
+          content = $('body').text().trim(); 
+      }
+
+      console.log("Ekstraksi berhasil!");
+      return {
+        title: title || 'Judul tidak ditemukan',
+        content: content || 'Konten tidak ditemukan'
+      };
+
+    } catch (error) {
+      console.error(`Gagal mengambil atau memproses URL: ${url}`);
+      console.error("Detail Error:", error.message);
+      return null;
+    }
+  }
+
+  static async googleCustomSearch(data) {
+    try {
+      const response = await axios.get('https://www.googleapis.com/customsearch/v1', { // Path dikosongkan karena sudah ada di baseURL
+        params: {
+          key   : data.apiKey,
+          cx    : data.searchEngineId,
+          q     : data.query,
+        }
+      });
+
+      console.log(response)
+    } catch (error) {
+      console.error("Detail Error:", error.message);
+      return null;
+    }
+  }
+}
+
 // Notification Manager
 class NotificationManager {
   static showNotification(event, data) {
@@ -376,6 +501,13 @@ class IPCHandlers {
     // Notification handler
     ipcMain.on('notification', (event, data) => {
       NotificationManager.showNotification(event, data)
+    })
+
+    // RAG (Retrieval Augmented Generation) Engine handler
+    ipcMain.on('rag-engine', async (event, data) => {
+      console.log('rag-engine',data)
+      let retrieve = await RAG.googleCustomSearch("https://www.nationalgeographic.com/science/article/best-night-sky-events-to-see-in-august")
+      console.log("retrieve",retrieve);
     })
 
     // Test handler

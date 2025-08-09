@@ -8,6 +8,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 import { initDatabase,getDataTable,defaultModelConfig } from './lib/idbHelper';
 import { textToSpeech } from './lib/textToSpeech';
 import '../assets/output.css';
+import { path } from 'framer-motion/client';
 
 // Main App Component
 export default function App() {
@@ -154,6 +155,11 @@ export default function App() {
                             parts: [{ text: responseTxt }]
                         };
                         setMessages(prev => [...prev, dataMessages]);
+                    }else if(jsonResponse?.tool_name == "readFile"){
+                        window.underWorld.ragEngine({
+                            tool_name   : jsonResponse.tool_name,
+                            path        : jsonResponse.parameters.path,
+                        });
                     }
                     
                     setIsLoading(false);

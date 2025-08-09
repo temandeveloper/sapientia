@@ -30,6 +30,7 @@ if (process.contextIsolated) {
           }
         },
         notification: (notif) => ipcRenderer.send('notification',notif),
+        ragEngine: (data) => ipcRenderer.send('rag-engine',data),
         gotoLink: (link) => {
           shell.openExternal(link)
         },

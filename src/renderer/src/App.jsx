@@ -157,8 +157,20 @@ export default function App() {
                         setMessages(prev => [...prev, dataMessages]);
                     }else if(jsonResponse?.tool_name == "readFile"){
                         window.underWorld.ragEngine({
+                            id          : data.id,
+                            prompt      : data.prompt,
                             tool_name   : jsonResponse.tool_name,
                             path        : jsonResponse.parameters.path,
+                        });
+                    }else if(jsonResponse?.tool_name == "getInternetInfo"){
+                        window.underWorld.ragEngine({
+                            id          : data.id,
+                            prompt      : data.prompt,
+                            tool_name   : jsonResponse.tool_name,
+                            key         : "{KEY}",
+                            cx          : "{CX}",
+                            query       : jsonResponse.parameters.query,
+                            ref_count   : 3, //jumlah referensi link yang diambil
                         });
                     }
                     

@@ -21,6 +21,7 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import mammoth from 'mammoth';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import {fileTypeFromFile} from 'file-type';
 
 // Configuration and Constants
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -315,13 +316,14 @@ class ChatManager {
         onTextChunk(chunk) {
           appState.mainWindow.webContents.send('response-chat', {
             response: chunk,
+            prompt: data.text,
             id: data.id,
             status: 'render'
           })
         },
-          // temperature: data.config.temperature,
-          // topK: data.config.top_k,
-          // topP: data.config.top_p,
+        // temperature: data.config.temperature,
+        // topK: data.config.top_k,
+        // topP: data.config.top_p,
       })
       
       console.log('Chat response:', response)
@@ -329,6 +331,7 @@ class ChatManager {
       appState.mainWindow.webContents.send('response-chat', {
         response: response,
         id: data.id,
+        prompt: data.text,
         status: 'end'
       })
     } catch (error) {
@@ -337,12 +340,14 @@ class ChatManager {
       appState.mainWindow.webContents.send('response-chat', {
         response: 'Error: Failed to generate response',
         id: data.id,
+        prompt: data.text,
         status: 'error'
       })
     }
   }
 }
 
+// section RAG Retrieval-augmented generation (generate model output from external resource)
 class RAG {
   static async getDataPdf(path) {
     console.log("path pdf", path);
@@ -450,18 +455,125 @@ class RAG {
     try {
       const response = await axios.get('https://www.googleapis.com/customsearch/v1', { // Path dikosongkan karena sudah ada di baseURL
         params: {
-          key   : data.apiKey,
-          cx    : data.searchEngineId,
+          key   : data.key,
+          cx    : data.cx,
           q     : data.query,
+
         }
       });
 
-      console.log(response)
+      console.log(response?.data.items)
+      return response?.data.items;
     } catch (error) {
       console.error("Detail Error:", error.message);
       return null;
     }
   }
+
+  static async retrieveFromInternet(params) {
+    console.log(`🚀 Memulai proses retrieve untuk query: "${params.query}"`);
+
+    // 1. Memanggil fungsi googleCustomSearch.
+    // Catatan: Sesuai permintaan, fungsi googleCustomSearch tidak diubah,
+    // sehingga key & cx yang di-pass di sini belum digunakan oleh fungsi tersebut.
+    // Lihat "Saran Perbaikan" di bawah.
+    const searchResults = await this.googleCustomSearch(params);
+
+    // 2. Cek apakah ada hasil, jika tidak, kembalikan string kosong.
+    if (!searchResults || searchResults.length === 0) {
+        console.log("Tidak ada hasil pencarian dari Google.");
+        return "";
+    }
+
+    // 3. Ambil 3 hasil teratas saja.
+    const topResults = searchResults.slice(0, params.ref_count);
+    console.log(`Mengambil ${topResults.length} link teratas untuk di-scrape.`);
+
+    let combinedText = "";
+
+    // 4. Looping melalui 3 hasil teratas.
+    // Menggunakan for...of agar bisa memakai `await` dengan benar.
+    for (const result of topResults) {
+        const url = result.link;
+        if (!url) continue; // Lanjut jika link tidak ada
+
+        console.log(`-- Scraping dari: ${url}`);
+        
+        // Panggil getDataWebPage untuk setiap link
+        const webContent = await this.getDataWebPage(url);
+
+        // 5. Jika scraping berhasil, gabungkan hasilnya.
+        if (webContent && webContent.content) {
+            // Gabungkan konten utama
+            combinedText += webContent.content;
+
+            // Tambahkan caption pemisah
+            combinedText += `\n\n--- source from : ${url} ---\n\n`;
+        }
+    }
+
+    console.log("✅ Proses retrieve dari internet selesai.");
+    return combinedText.trim(); // .trim() untuk menghapus spasi/newline di akhir
+  }
+
+  static async ragRouterEngine(params) {
+    try {
+      let retrieveInfo = "";
+      if(params.tool_name == "readFile"){
+        let typeFile = await fileTypeFromFile(params.path);
+        console.log("readFile filetype :",typeFile)
+        if(typeFile.ext == "pdf"){
+          retrieveInfo  = await this.getDataPdf(params.path);
+        }else if(typeFile.ext == "docx"){
+          retrieveInfo  = await this.getDataDocx(params.path);
+        }else{
+          console.warn("readFile filetype tidak support :",typeFile)
+          return false;
+        }
+      }else if(params.tool_name == "getInternetInfo"){
+          retrieveInfo  = await this.retrieveFromInternet(params);
+      }
+
+      let promptRAG = `--- CONTEXT (Use ONLY the information below to answer the user's question. Do not use your prior knowledge.) ---
+                      ${retrieveInfo}
+                      --- END OF CONTEXT ---
+
+                      Based on the provided context above, answer the following user's question: "${params.prompt}"
+                      
+                      Your response MUST be a JSON object that follows the "Direct Answer" format.`;
+                      
+      console.log("promptRAG : ",promptRAG);
+
+      const response = await appState.sessionChat.prompt(promptRAG, {
+        grammar: appState.grammar,
+        onTextChunk(chunk) {
+          appState.mainWindow.webContents.send('response-chat', {
+            response: chunk,
+            id: params.id,
+            status: 'render'
+          })
+        },
+        // temperature: params.config.temperature,
+        // topK: params.config.top_k,
+        // topP: params.config.top_p,
+      })
+      console.log('Chat response:', response)
+      
+      appState.mainWindow.webContents.send('response-chat', {
+        response: response,
+        id: params.id,
+        status: 'end'
+      })
+    } catch (error) {
+      console.error('Failed to send chat:', error)
+      appState.mainWindow.webContents.send('response-chat', {
+        response: 'Error: Failed to generate response',
+        id: params.id,
+        status: 'error'
+      })
+    }
+  }
+
 }
 
 // Notification Manager
@@ -506,8 +618,8 @@ class IPCHandlers {
     // RAG (Retrieval Augmented Generation) Engine handler
     ipcMain.on('rag-engine', async (event, data) => {
       console.log('rag-engine',data)
-      let retrieve = await RAG.googleCustomSearch("https://www.nationalgeographic.com/science/article/best-night-sky-events-to-see-in-august")
-      console.log("retrieve",retrieve);
+      let response = await RAG.ragRouterEngine(data)
+      console.log("RAG Router Engine Response : ",response);
     })
 
     // Test handler
